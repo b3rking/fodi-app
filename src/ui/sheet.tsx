@@ -42,7 +42,7 @@ export function Sheet({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <Pressable style={styles.backdropTap} onPress={onClose} />
+        <Pressable style={styles.backdropTap} onPress={onClose} accessibilityLabel="Fermer" />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.sheetWrap}

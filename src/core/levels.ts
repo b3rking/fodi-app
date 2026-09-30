@@ -19,11 +19,11 @@ export const LEVEL_PRESETS: LevelPreset[] = [
 ];
 
 const LABELS: Record<LevelPreset, string> = {
-  empty: 'Empty',
+  empty: 'Vide',
   quarter: '¼',
   half: '½',
   three_quarter: '¾',
-  full: 'Full',
+  full: 'Plein',
 };
 
 export function levelLabel(level: LevelPreset): string {

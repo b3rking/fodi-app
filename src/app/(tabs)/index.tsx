@@ -49,14 +49,13 @@ export default function TodayScreen() {
   if (error) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorTitle}>Cannot open the database</Text>
+        <Text style={styles.errorTitle}>Impossible d’ouvrir la base de données</Text>
         <Text style={styles.errorBody}>{error}</Text>
       </View>
     );
   }
 
   const verdictStyle = verdict[breakEven.verdict];
-void verdictStyle;
   const tankValue = unrecoveredFuelMoney(tank);
   const kmLeft = kmLeftInTank(tank, efficiency);
   const atReserve = isAtReserve(tank);
@@ -70,11 +69,11 @@ void verdictStyle;
       <View style={styles.header}>
         <Text style={styles.date}>{todayLabel()}</Text>
         <View style={styles.headerRight}>
-          <Text style={styles.tankChip}>Tank {litres(tank.litres)}</Text>
+          <Text style={styles.tankChip}>Réservoir {litres(tank.litres)}</Text>
           <Pressable
             onPress={() => setSettingsOpen(true)}
             accessibilityRole="button"
-            accessibilityLabel="Settings"
+            accessibilityLabel="Réglages"
             style={styles.gear}
           >
             <Text style={styles.gearGlyph}>⚙</Text>
@@ -84,9 +83,9 @@ void verdictStyle;
 
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      {/* 1. Did I make money? */}
+      {/* 1. Ai-je gagné de l'argent aujourd'hui ? */}
       <Card style={styles.heroCard}>
-        <Label>TODAY'S PROFIT</Label>
+        <Label>BÉNÉFICE DU JOUR</Label>
         <Text
           style={[styles.hero, { color: today.profit >= 0 ? colors.text : colors.bad }]}
           adjustsFontSizeToFit
@@ -95,18 +94,18 @@ void verdictStyle;
           {fbu(today.profit)}
         </Text>
         <Text style={styles.heroBreakdown} numberOfLines={2}>
-          Fares {fbu(today.fares)} − Fuel {fbu(today.fuelCost)} − Other {fbu(today.otherCosts)}
+          Recettes {fbu(today.fares)} − Carburant {fbu(today.fuelCost)} − Autres {fbu(today.otherCosts)}
         </Text>
         <Divider />
         <Row
-          label="In your pocket today"
+          label="Dans ta poche aujourd'hui"
           value={fbu(today.cashInHand)}
           color={today.cashInHand >= 0 ? colors.text : colors.bad}
         />
         <Text style={styles.note}>
           {today.fuelBoughtToday > 0
-            ? 'Fuel you bought today comes out of your pocket now, not on the day you burn it.'
-            : 'Cash is not the same as profit: fuel you burned was paid for on an earlier day.'}
+            ? 'Le carburant acheté aujourd’hui sort de ta poche maintenant, pas le jour où tu le consomes.'
+            : 'L’argent en poche n’est pas le bénéfice : le carburant brûlé a été payé un autre jour.'}
         </Text>
       </Card>
 
@@ -124,11 +123,11 @@ void verdictStyle;
             <MarginGauge breakEven={breakEven.trueBreakEvenKmPerL} actual={breakEven.actualKmPerL} />
             <Text style={styles.reason}>{breakEvenText}</Text>
             <View style={styles.marginRow}>
-              <Text style={styles.marginCaption}>Money in</Text>
+              <Text style={styles.marginCaption}>Argent gagné</Text>
               <Text style={styles.marginValue}>{fbu(perKm.revenue)}</Text>
-              <Text style={styles.marginCaption}>Money out</Text>
+              <Text style={styles.marginCaption}>Argent dépensé</Text>
               <Text style={styles.marginValue}>{fbu(perKm.costPerKm)}</Text>
-              <Text style={styles.marginCaption}>Profit each km</Text>
+              <Text style={styles.marginCaption}>Bénéfice par km</Text>
               <Text
                 style={[
                   styles.marginValue,
@@ -142,9 +141,9 @@ void verdictStyle;
         )}
       </Card>
 
-      {/* 3. How much of my money is in the tank? */}
+      {/* 3. Combien de mon argent est dans le réservoir ? */}
       <Card>
-        <Label>YOUR TANK</Label>
+        <Label>TON RÉSERVOIR</Label>
         <View style={styles.gaugeWrap}>
           <TankGauge
             litres={tank.litres}
@@ -154,21 +153,21 @@ void verdictStyle;
           />
         </View>
         <Row
-          label={kmLeft === null ? 'Range' : `Range at ${kmPerLitre(efficiency)}`}
+          label={kmLeft === null ? 'Autonomie' : `Autonomie à ${kmPerLitre(efficiency)}`}
           value={kmLeft === null ? '—' : `${Math.round(kmLeft)} km`}
         />
-        <Row label="Fuel money in the tank" value={fbu(tankValue)} />
+        <Row label="Argent du carburant dans le réservoir" value={fbu(tankValue)} />
         {tankValue > 0 && (
           <View style={styles.warnBox}>
             <Text style={styles.warnText}>
-              {fbu(tankValue)} of your money is fuel in the tank right now.
+              {fbu(tankValue)} de ton argent sont en carburant dans le réservoir.
             </Text>
           </View>
         )}
         {atReserve && tank.litres > 0 && (
           <View style={[styles.warnBox, { backgroundColor: colors.badDim }]}>
             <Text style={[styles.warnText, { color: colors.bad }]}>
-              Reserve level. Time to fill up.
+              Niveau de réserve. Il est temps de faire le plein.
             </Text>
           </View>
         )}
@@ -184,24 +183,24 @@ void verdictStyle;
         </Card>
       )}
 
-      {/* The three things he actually does all day. */}
+      {/* Les trois gestes qu'il fait toute la journée. */}
       <View style={styles.actions}>
-        <ActionButton label="TRIP" icon="＋" onPress={() => router.push('/trip/new')} tone="primary" />
-        <ActionButton label="FUELLED UP" icon="⛽" onPress={() => router.push('/fuel/new')} />
-        <ActionButton label="COST" icon="−" onPress={() => router.push('/cost/new')} />
+        <ActionButton label="TRAJET" icon="＋" onPress={() => router.push('/trip/new')} tone="primary" />
+        <ActionButton label="PLEIN" icon="⛽" onPress={() => router.push('/fuel/new')} />
+        <ActionButton label="DÉPENSE" icon="−" onPress={() => router.push('/cost/new')} />
       </View>
 
       <Card>
         <View style={styles.statRow}>
-          <Stat label="kilometres" value={`${Math.round(today.km)}`} />
-          <Stat label="trips" value={`${today.tripCount}`} />
-          <Stat label="fuel burned" value={litres(today.fuelCost / Math.max(1, blendedPrice(tank) ?? 3800))} />
-          <Stat label="earned per km" value={fbu(perKm.revenuePerKm)} />
+          <Stat label="kilomètres" value={`${Math.round(today.km)}`} />
+          <Stat label="trajets" value={`${today.tripCount}`} />
+          <Stat label="carburant brûlé" value={litres(today.fuelCost / Math.max(1, blendedPrice(tank) ?? 3800))} />
+          <Stat label="gagné par km" value={fbu(perKm.revenuePerKm)} />
         </View>
         <Divider />
-        <Row label="Your fuel economy" value={kmPerLitre(efficiency)} />
+        <Row label="Ton rendement" value={kmPerLitre(efficiency)} />
         <Row
-          label="Profit margin"
+          label="Marge de bénéfice"
           value={pct(perKm.profitMarginPct)}
           color={perKm.profitMarginPct >= 15 ? colors.good : perKm.profitMarginPct >= 0 ? colors.warn : colors.bad}
         />
@@ -211,7 +210,7 @@ void verdictStyle;
 }
 
 function todayLabel(): string {
-  return new Date().toLocaleDateString('en-GB', {
+  return new Date().toLocaleDateString('fr-FR', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',

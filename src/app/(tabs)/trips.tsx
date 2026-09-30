@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, EmptyState, Label } from '../../ui/components';
 import { space } from '../../ui/tokens';
 
-/** Trips. Built in P3. */
+/** Trajets. Construit en P3. */
 export default function TripsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -16,13 +16,13 @@ export default function TripsScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg }}>
       <View style={styles.pad}>
         <EmptyState
-          title="No trips yet"
-          body="Log your first trip and we will work out your km/L automatically."
-          actionLabel="＋ Add trip"
+          title="Aucun trajet pour l’instant"
+          body="Note ton premier trajet et nous calculerons automatiquement ton km/L."
+          actionLabel="＋ Ajouter un trajet"
           onAction={() => {}}
         />
         <Card>
-          <Label>FILTERS</Label>
+          <Label>FILTRES</Label>
         </Card>
       </View>
     </ScrollView>

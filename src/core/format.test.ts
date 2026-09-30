@@ -47,11 +47,11 @@ describe('fbuShort', () => {
 });
 
 describe('unit formatters', () => {
-  it('formats litres, km and km/L', () => {
-    expect(litres(22.5)).toBe(`22.5${NBSP}L`);
-    expect(litres(8)).toBe(`8.0${NBSP}L`);
-    expect(km(4.7)).toBe(`4.7${NBSP}km`);
-    expect(kmPerLitre(10.8)).toBe(`10.8${NBSP}km/L`);
+  it('formats litres, km and km/L with a French decimal comma', () => {
+    expect(litres(22.5)).toBe(`22,5${NBSP}L`);
+    expect(litres(8)).toBe(`8,0${NBSP}L`);
+    expect(km(4.7)).toBe(`4,7${NBSP}km`);
+    expect(kmPerLitre(10.8)).toBe(`10,8${NBSP}km/L`);
   });
 
   it('shows a dash for an unknown economy, never a zero', () => {
@@ -65,17 +65,26 @@ describe('unit formatters', () => {
   it('formats per-km and per-litre prices', () => {
     expect(fbuPerKm(467.757)).toBe(`468${NBSP}FBu/km`);
     expect(fbuPerLitre(3800)).toBe(`3${NBSP}800${NBSP}FBu/L`);
-    expect(pct(21.5199)).toBe('22%');
+    expect(pct(21.5199)).toBe(`22${NBSP}%`);
+  });
+
+  it('never uses a comma as a thousands separator', () => {
+    // En français la virgule n'est qu'un séparateur décimal. Si elle servait
+    // aussi de séparateur de milliers, "22,5 L" pourrait se lire "225 L".
+    const formatted = `${fbu(12500)}|${litres(22.5)}|${kmPerLitre(10.75, 2)}`;
+    expect(formatted).not.toMatch(/\d,\d{3}/);
+    expect(formatted).toContain('22,5');
+    expect(formatted).toContain('10,75');
   });
 });
 
 describe('relativeDays', () => {
-  it('reads naturally for a driver', () => {
-    expect(relativeDays(0)).toBe('today');
-    expect(relativeDays(1)).toBe('yesterday');
-    expect(relativeDays(4)).toBe('4 days ago');
-    expect(relativeDays(8)).toBe('last week');
-    expect(relativeDays(21)).toBe('3 weeks ago');
-    expect(relativeDays(90)).toBe('3 months ago');
+  it('reads naturally in French for a driver', () => {
+    expect(relativeDays(0)).toBe("aujourd'hui");
+    expect(relativeDays(1)).toBe('hier');
+    expect(relativeDays(4)).toBe('il y a 4 jours');
+    expect(relativeDays(8)).toBe('la semaine dernière');
+    expect(relativeDays(21)).toBe('il y a 3 semaines');
+    expect(relativeDays(90)).toBe('il y a 3 mois');
   });
 });

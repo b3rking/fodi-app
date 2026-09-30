@@ -1,12 +1,12 @@
 import React from 'react';
 import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
 import type { Colors } from '../../core/theme';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState } from '../../ui/components';
 import { space } from '../../ui/tokens';
 
-/** Reports. Built in P7. */
+/** Rapports. Construit en P7. */
 export default function ReportsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -15,8 +15,8 @@ export default function ReportsScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg }}>
       <EmptyState
-        title="Nothing to report yet"
-        body="Once you have driven for a few days this page shows your profit, your cost per kilometre and your best and worst days."
+        title="Rien à signaler pour l’instant"
+        body="Après quelques jours de route, cette page te montrera ton bénéfice, ton coût au kilomètre et tes meilleures et mauvaises journées."
       />
     </ScrollView>
   );
@@ -24,5 +24,5 @@ export default function ReportsScreen() {
 
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+    screen: { flex: 1, backgroundColor: colors.bg },
   });

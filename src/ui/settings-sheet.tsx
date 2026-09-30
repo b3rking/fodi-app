@@ -7,16 +7,28 @@ import type { Colors, ThemeMode } from '../core/theme';
 import { DEFAULT_PIN } from '../core/lock';
 
 const OPTIONS: { mode: ThemeMode; label: string; blurb: string }[] = [
-  { mode: 'system', label: 'Same as my phone', blurb: 'Follows the system setting. Turn this off at night.' },
-  { mode: 'light', label: 'Always light', blurb: 'Bright, for daytime and strong sun.' },
-  { mode: 'dark', label: 'Always dark', blurb: 'Easier on the eyes at night, and less obvious from outside.' },
+  {
+    mode: 'system',
+    label: 'Comme mon téléphone',
+    blurb: 'Suit le réglage du système. Éteins-le la nuit.',
+  },
+  {
+    mode: 'light',
+    label: 'Toujours clair',
+    blurb: 'Lumineux, pour la journée et le soleil fort.',
+  },
+  {
+    mode: 'dark',
+    label: 'Toujours sombre',
+    blurb: 'Plus doux la nuit, et moins visible de l’extérieur.',
+  },
 ];
 
 /**
- * Settings.
+ * Réglages.
  *
- * A sheet, not a sixth tab. The only two settings that exist today are the
- * ones that actually change something for the driver.
+ * Une feuille, pas un sixième onglet. Il n’y a que les deux réglages qui
+ * changent vraiment quelque chose pour le chauffeur.
  */
 export function SettingsSheet({
   visible,
@@ -29,8 +41,8 @@ export function SettingsSheet({
   const styles = useThemedStyles(makeStyles);
 
   return (
-    <Sheet visible={visible} title="Settings" onClose={onClose}>
-      <Field label="Appearance">
+    <Sheet visible={visible} title="Réglages" onClose={onClose}>
+      <Field label="Apparence">
         <View style={styles.options}>
           {OPTIONS.map((opt) => {
             const active = mode === opt.mode;
@@ -38,6 +50,8 @@ export function SettingsSheet({
               <Pressable
                 key={opt.mode}
                 onPress={() => setMode(opt.mode)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
                 style={[styles.option, active && styles.optionActive]}
               >
                 <View style={styles.optionHeader}>
@@ -55,11 +69,11 @@ export function SettingsSheet({
         </View>
       </Field>
 
-      <Field label="App lock">
+      <Field label="Verrouillage">
         <Text style={styles.note}>
-          The app asks for a 4-digit PIN before it opens. The default PIN is{' '}
-          <Text style={styles.code}>{DEFAULT_PIN}</Text> — change it or turn the lock off in this
-          screen. There is no way to recover a forgotten PIN, so write it down.
+          L’application demande un code à 4 chiffres avant de s’ouvrir. Le code par défaut est{' '}
+          <Text style={styles.code}>{DEFAULT_PIN}</Text> — tu peux le changer ou désactiver le
+          verrouillage ici. Un code oublié n’est pas récupérable, donc note-le.
         </Text>
       </Field>
     </Sheet>

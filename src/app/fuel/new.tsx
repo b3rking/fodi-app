@@ -46,37 +46,36 @@ export default function FuelNew() {
   const overfill = litres !== null && litres > maxFillableL(tank) + 0.01;
 
   const preview = useMemo(() => {
+    const fr = (n: number) => n.toFixed(1).replace('.', ',');
+
     if (litres === null || litres <= 0) {
-      return 'Enter how many litres you put in.';
+      return 'Entre la quantité de carburant mise dans le réservoir.';
     }
     if (price === null || price <= 0) {
-      return 'Now enter the price per litre.';
+      return 'Maintenant, le prix par litre.';
     }
 
     const parts: string[] = [];
-    parts.push(
-      `You added ${litres.toFixed(1)} L for ${fbu(litres * price)}.`
-    );
+    parts.push(`Tu as mis ${fr(litres)} L pour ${fbu(litres * price)}.`);
 
     if (overfill) {
       parts.push(
-        `That is more than the tank has room for — only ${maxFillableL(tank).toFixed(1)} L will fit in ${capacity} L.`
+        `C’est plus que ce que le réservoir peut contenir : il ne reste que ${fr(
+          maxFillableL(tank)
+        )} L de place dans ${capacity} L.`
       );
     }
 
     if (burned > 0.01) {
-      parts.push(`Since your last fill you burned ${burned.toFixed(1)} L.`);
-      if (efficiency && efficiency > 0) {
-        parts.push(`That fuel is what was in the tank, priced at what you paid for it.`);
-      }
+      parts.push(`Depuis ton dernier plein, tu as brûlé ${fr(burned)} L.`);
     }
 
     if (litresAfterBuy <= capacity + 0.01) {
-      parts.push(`Tank now holds ${litresAfterBuy.toFixed(1)} of ${capacity} L.`);
+      parts.push(`Le réservoir contient maintenant ${fr(litresAfterBuy)} L sur ${capacity} L.`);
     }
 
     return parts.join(' ');
-  }, [litres, price, overfill, burned, litresBefore, litresAfterBuy, capacity, efficiency, maxFillableL(tank)]);
+  }, [litres, price, overfill, burned, litresBefore, litresAfterBuy, capacity, maxFillableL(tank)]);
 
   const canSave = litres !== null && litres > 0 && price !== null && price > 0 && !saving;
 
@@ -113,24 +112,24 @@ export default function FuelNew() {
   return (
     <Sheet
       visible
-      title="Fueled up"
-      subtitle="Two numbers and where you bought it. We do the rest."
+      title="Plein de carburant"
+      subtitle="Deux nombres et la station. Le reste, on s’en occupe."
       onClose={() => router.back()}
-      footer={<BigButton label={saving ? 'Saving…' : 'Save this fill'} onPress={save} disabled={!canSave} />}
+      footer={<BigButton label={saving ? 'Enregistrement…' : 'Enregistrer ce plein'} onPress={save} disabled={!canSave} />}
     >
-      <Field label="Litres you put in">
+      <Field label="Quantité mise dans le réservoir">
         <BigField
           value={litresText}
           onChangeText={setLitresText}
-          placeholder="0.0"
+          placeholder="0,0"
           keyboardType="decimal-pad"
           suffix="L"
         />
       </Field>
 
       <Field
-        label="Price per litre"
-        hint={`That is ${price !== null && price > 0 ? fbuPerLitre(price) : '—'} for a full tank of fuel.`}
+        label="Prix par litre"
+        hint={`Soit ${price !== null && price > 0 ? fbuPerLitre(price) : '—'} de carburant.`}
       >
         <BigField
           value={priceText}
@@ -141,17 +140,20 @@ export default function FuelNew() {
         />
       </Field>
 
-      <Field label="Where">
+      <Field label="Station">
         <TextInput
           value={station}
           onChangeText={setStation}
-          placeholder="Station name"
+          placeholder="Nom de la station"
           placeholderTextColor={colors.textFaint}
           style={styles.input}
         />
       </Field>
 
-      <Field label="Tank level now" hint="Five big buttons. We never make you type a fraction.">
+      <Field
+        label="Niveau du réservoir maintenant"
+        hint="Cinq gros boutons. On ne te demande jamais de taper une fraction."
+      >
         <View style={styles.levels}>
           {(['empty', 'quarter', 'half', 'three_quarter', 'full'] as LevelPreset[]).map((l) => (
             <Pressable
@@ -179,8 +181,8 @@ export default function FuelNew() {
       {overfill && (
         <View style={{ marginBottom: space.md }}>
           <Warning>
-            The tank only holds {capacity} L and it already has {litresBefore.toFixed(1)} L. Check
-            the litres — you can only add {maxFillableL(tank).toFixed(1)} L.
+            Le réservoir contient {capacity} L et il y en a déjà {litresBefore.toFixed(1).replace('.', ',')} L.
+            Tu ne peux ajouter que {maxFillableL(tank).toFixed(1).replace('.', ',')} L. Vérifie la quantité.
           </Warning>
         </View>
       )}

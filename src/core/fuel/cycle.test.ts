@@ -103,7 +103,7 @@ describe('computeCycle', () => {
     expect(c.startedBy).toBeNull();
     expect(c.km).toBe(0);
     expect(c.kmPerLitre).toBeNull();
-    expect(explainCycle(c)).toContain('Fill the tank to full');
+    expect(explainCycle(c)).toContain('Fais un plein');
   });
 
   it('never divides by zero with no trips and no km', () => {
@@ -124,7 +124,7 @@ describe('computeCycle', () => {
 describe('explainCycle', () => {
   it('celebrates recovery past 100% with the fuel still in the tank', () => {
     const text = explainCycle(cycle12());
-    expect(text).toContain('1.3 times over');
+    expect(text).toContain('1,3 fois');
     expect(text).toContain(`85${NBSP}500${NBSP}FBu`); // still unburned value
   });
 
@@ -137,7 +137,7 @@ describe('explainCycle', () => {
       faresEarned: 40000,
       otherIncomeEarned: 0,
     });
-    expect(explainCycle(c)).toContain('47%');
-    expect(explainCycle(c)).toContain('still needed');
+    expect(explainCycle(c)).toContain('47 %');
+    expect(explainCycle(c)).toContain('Il te manque encore');
   });
 });

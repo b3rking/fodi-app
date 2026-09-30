@@ -48,16 +48,16 @@ export default function CostNew() {
   return (
     <Sheet
       visible
-      title="Add a cost"
-      subtitle="Fuel has its own button, because its maths is different."
+      title="Ajouter une dépense"
+      subtitle="Le carburant a son propre bouton, parce que son calcul est différent."
       onClose={() => router.back()}
-      footer={<BigButton label={saving ? 'Saving…' : 'Save cost'} onPress={save} disabled={!canSave} />}
+      footer={<BigButton label={saving ? 'Enregistrement…' : 'Enregistrer la dépense'} onPress={save} disabled={!canSave} />}
     >
-      <Field label="How much">
+      <Field label="Combien">
         <BigField value={amount} onChangeText={setAmount} placeholder="0" suffix="FBU" />
       </Field>
 
-      <Field label="What for">
+      <Field label="Pour quoi">
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.chips}>
             {COST_CATEGORIES.map((c) => (
@@ -73,11 +73,11 @@ export default function CostNew() {
         </ScrollView>
       </Field>
 
-      <Field label="Note" hint="Optional. Helps when you are looking back at a bad month.">
+      <Field label="Note" hint="Facultatif. Utile quand tu regardes un mauvais mois en arrière.">
         <TextInput
           value={note}
           onChangeText={setNote}
-          placeholder="Anything you want to remember"
+          placeholder="Ce que tu veux retenir"
           placeholderTextColor={colors.textFaint}
           style={styles.input}
         />

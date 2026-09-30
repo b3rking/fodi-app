@@ -50,18 +50,20 @@ export default function TripNew() {
   const profit = fare !== null && fuel.cost !== null ? fare - fuel.cost : null;
 
   const preview = useMemo(() => {
-    if (to.trim().length === 0) return 'Where are you going?';
-    if (km === null || km <= 0) return 'How far is the trip?';
-    if (fare === null || fare <= 0) return 'How much did the passenger pay?';
+    const fr = (n: number) => n.toFixed(1).replace('.', ',');
+
+    if (to.trim().length === 0) return 'Où vas-tu ?';
+    if (km === null || km <= 0) return 'C’est combien de kilomètres ?';
+    if (fare === null || fare <= 0) return 'Combien le client a-t-il payé ?';
     if (fuel.cost === null) {
-      return `Fare ${fbu(fare)} recorded. We will work out the fuel cost once we know your km/L.`;
+      return `Course enregistrée : ${fbu(fare)}. Nous calculerons le coût du carburant dès que ton km/L sera connu.`;
     }
     const bits = [
-      `${km.toFixed(1)} km for ${fbu(fare)}.`,
-      `That burns about ${fuel.litres?.toFixed(1)} L of fuel (${fbu(fuel.cost)}).`,
+      `${fr(km)} km pour ${fbu(fare)}.`,
+      `Cela consomme environ ${fr(fuel.litres ?? 0)} L de carburant (${fbu(fuel.cost)}).`,
     ];
     if (profit !== null) {
-      bits.push(`Profit on this trip ≈ ${fbu(profit)}.`);
+      bits.push(`Bénéfice sur ce trajet ≈ ${fbu(profit)}.`);
     }
     return bits.join(' ');
   }, [to, km, fare, fuel, profit]);
@@ -102,12 +104,12 @@ export default function TripNew() {
   return (
     <Sheet
       visible
-      title="New trip"
-      subtitle="Destination, distance, fare. That is all."
+      title="Nouveau trajet"
+      subtitle="Destination, distance, prix. C’est tout."
       onClose={() => router.back()}
-      footer={<BigButton label={saving ? 'Saving…' : 'Save trip'} onPress={save} disabled={!canSave} />}
+      footer={<BigButton label={saving ? 'Enregistrement…' : 'Enregistrer le trajet'} onPress={save} disabled={!canSave} />}
     >
-      <Field label="Going to">
+      <Field label="Tu vas à">
         <TextInput
           value={to}
           onChangeText={setTo}
@@ -126,7 +128,7 @@ export default function TripNew() {
         )}
       </Field>
 
-      <Field label="Coming from" hint="Optional.">
+      <Field label="Tu viens de" hint="Facultatif.">
         <TextInput
           value={from}
           onChangeText={setFrom}
@@ -137,10 +139,10 @@ export default function TripNew() {
       </Field>
 
       <Field label="Distance">
-        <BigField value={kmText} onChangeText={setKmText} placeholder="0.0" suffix="km" />
+        <BigField value={kmText} onChangeText={setKmText} placeholder="0,0" suffix="km" />
       </Field>
 
-      <Field label="Fare paid" hint="Any tip or toll goes in the next trip, or edit this one later.">
+      <Field label="Prix payé" hint="Le pourboir ou le péage se met sur le trajet suivant, ou tu modifies celui-ci.">
         <BigField value={fareText} onChangeText={setFareText} placeholder="0" suffix="FBU" />
       </Field>
 
@@ -148,11 +150,13 @@ export default function TripNew() {
 
       {efficiency === null && (
         <Text style={styles.note}>
-          Your km/L is not known yet. Fill the tank once and we will work it out.
+          Ton km/L n’est pas encore connu. Fais un plein une fois et nous le calculerons.
         </Text>
       )}
       {efficiency !== null && (
-        <Text style={styles.note}>Using your average of {kmPerLitre(efficiency)} for fuel cost.</Text>
+        <Text style={styles.note}>
+          Coût du carburant estimé avec ta moyenne de {kmPerLitre(efficiency)}.
+        </Text>
       )}
     </Sheet>
   );

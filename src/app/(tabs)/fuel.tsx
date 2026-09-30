@@ -11,7 +11,7 @@ import { MarginGauge, TankGauge } from '../../ui/gauge';
 import { blendedPrice } from '../../core/fuel/engine';
 import { Row } from '../../ui/components';
 
-/** Fuel. Built in P4 — the tank and break-even cards are wired to real data already. */
+/** Carburant. Construit en P4 — les cartes réservoir et seuil sont déjà reliées aux vraies données. */
 export default function FuelScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -29,7 +29,7 @@ export default function FuelScreen() {
             reserveL={tank.reserveL}
             blendedPrice={blendedPrice(tank)}
           />
-          <Row label="Fuel money in the tank" value={fbu(tank.cost)} />
+          <Row label="Argent du carburant dans le réservoir" value={fbu(tank.cost)} />
         </Card>
 
         <Card>
@@ -45,13 +45,13 @@ export default function FuelScreen() {
         </Card>
 
         <Card>
-          <Row label="This tank" value={cycleText} />
+          <Row label="Ce réservoir" value={cycleText} />
         </Card>
 
         <EmptyState
-          title="No fills yet"
-          body="Record your first fill and this page will track what that fuel earns back."
-          actionLabel="⛽ Record a fill"
+          title="Aucun plein enregistré"
+          body="Note ton premier plein et cette page suivra ce que ce carburant te rapporte."
+          actionLabel="⛽ Noter un plein"
           onAction={() => {}}
         />
       </View>

@@ -117,7 +117,7 @@ describe('computeBreakEven', () => {
     const be = computeBreakEven({ perKm, tank: tankAt3800(), actualKmPerL: 10, tripCount: 10 });
     expect(be.breakEvenExists).toBe(false);
     expect(be.trueBreakEvenKmPerL).toBeNull();
-    expect(explainBreakEven(be, perKm)).toContain('Even free fuel will not save you');
+    expect(explainBreakEven(be, perKm)).toContain('Même le carburant gratuit ne te sauvera pas');
   });
 
   it('refuses a verdict on too little data', () => {
@@ -128,7 +128,7 @@ describe('computeBreakEven', () => {
       tripCount: 1,
     });
     expect(be.verdict).toBe('not_enough_data');
-    expect(verdictLabel(be.verdict)).toBe('NOT ENOUGH DATA');
+    expect(verdictLabel(be.verdict)).toBe('PAS ASSEZ DE DONNÉES');
   });
 
   it('gives no margin when the economy is unknown, but still a verdict', () => {
@@ -171,9 +171,9 @@ describe('explainBreakEven', () => {
     const perKm = totalsToPerKm({ km: 100, fares: 46800, otherIncome: 0, fuelCost: 61300, otherCosts: 0 });
     const be = computeBreakEven({ perKm, tank: tankAt3800(), actualKmPerL: 7.5, tripCount: 10 });
     const text = explainBreakEven(be, perKm);
-    expect(text).toContain('km/L short');
-    expect(text).toContain(`1${NBSP}450${NBSP}FBu`);   // 145 per km x 10
-    expect(text).toContain('Two ways out');
+    expect(text).toContain('il te manque');
+    expect(text).toContain(`1${NBSP}450${NBSP}FBu`);   // 145 par km x 10
+    expect(text).toContain('Deux solutions');
     // Amounts use the space grouping, not a comma.
     expect(text).not.toMatch(/\d,\d{3}/);
   });
@@ -181,7 +181,7 @@ describe('explainBreakEven', () => {
   it('says the safety net when making money', () => {
     const perKm = totalsToPerKm(SEPTEMBER);
     const be = computeBreakEven({ perKm, tank: tankAt3800(), actualKmPerL: 10.8, tripCount: 240 });
-    expect(explainBreakEven(be, perKm)).toContain('22% worse');
+    expect(explainBreakEven(be, perKm)).toContain('22% de rendement');
   });
 
   it('produces a sentence with no NaN, ever', () => {

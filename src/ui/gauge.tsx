@@ -94,7 +94,7 @@ export function MarginGauge({
   if (breakEven === null || actual === null || breakEven <= 0) {
     return (
       <View style={styles.gaugeFallback}>
-        <Text style={styles.caption}>Not enough driving yet to compare.</Text>
+        <Text style={styles.caption}>Pas encore assez de route pour comparer.</Text>
       </View>
     );
   }

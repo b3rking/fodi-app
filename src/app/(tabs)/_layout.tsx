@@ -30,11 +30,11 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: (p) => <Glyph glyph="◉" {...p} /> }} />
-      <Tabs.Screen name="trips" options={{ title: 'Trips', tabBarIcon: (p) => <Glyph glyph="→" {...p} /> }} />
-      <Tabs.Screen name="fuel" options={{ title: 'Fuel', tabBarIcon: (p) => <Glyph glyph="⛽" {...p} /> }} />
-      <Tabs.Screen name="money" options={{ title: 'Money', tabBarIcon: (p) => <Glyph glyph="₣" {...p} /> }} />
-      <Tabs.Screen name="reports" options={{ title: 'Reports', tabBarIcon: (p) => <Glyph glyph="▤" {...p} /> }} />
+      <Tabs.Screen name="index" options={{ title: "Aujourd'hui", tabBarIcon: (p) => <Glyph glyph="◉" {...p} /> }} />
+      <Tabs.Screen name="trips" options={{ title: 'Trajets', tabBarIcon: (p) => <Glyph glyph="→" {...p} /> }} />
+      <Tabs.Screen name="fuel" options={{ title: 'Carburant', tabBarIcon: (p) => <Glyph glyph="⛽" {...p} /> }} />
+      <Tabs.Screen name="money" options={{ title: 'Argent', tabBarIcon: (p) => <Glyph glyph="₣" {...p} /> }} />
+      <Tabs.Screen name="reports" options={{ title: 'Rapports', tabBarIcon: (p) => <Glyph glyph="▤" {...p} /> }} />
     </Tabs>
   );
 }

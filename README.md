@@ -12,7 +12,18 @@ The full design and build plan is in [`PLAN.md`](./PLAN.md).
 
 ---
 
-## Default PIN
+## Langue
+
+L'interface est **entièrement en français**. Les phrases générées par le moteur
+(verdict, seuil de rentabilité, récupération du plein) sont également en français :
+ce sont elles qui expliquent l'application, pas seulement les libellés.
+
+Convention numérique française : espace insécable pour les milliers (`12 500`),
+virgule pour les décimales (`22,5 L`). La virgule n'est **jamais** un séparateur
+de milliers en français, donc `22,5 L` ne peut pas être confondu avec `225 L` —
+important pour le carburant.
+
+## Code PIN par défaut
 
 **5832**
 

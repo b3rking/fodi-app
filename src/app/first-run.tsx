@@ -20,41 +20,44 @@ export default function FirstRun() {
   return (
     <View style={styles.screen}>
       <View style={styles.body}>
-        <Text style={styles.title}>Welcome to Fodi</Text>
+        <Text style={styles.title}>Bienvenue sur Fodi</Text>
         <Text style={styles.subtitle}>
-          It keeps track of your fuel, your trips and your profit, and tells you when you are
-          losing money. Three quick questions and you are done.
+          Il garde trace de ton carburant, de tes trajets et de ton bénéfice, et te dit quand tu
+          perds de l’argent. Trois questions rapides et c’est terminé.
         </Text>
 
         <View style={styles.question}>
-          <Text style={styles.label}>What are we calling your car?</Text>
+          <Text style={styles.label}>Comment appelle-t-on ta voiture ?</Text>
           <View style={styles.fakeInput}>
-            <Text style={styles.fakeInputText}>My taxi</Text>
+            <Text style={styles.fakeInputText}>Mon taxi</Text>
           </View>
         </View>
 
         <View style={styles.question}>
-          <Text style={styles.label}>How big is the tank?</Text>
+          <Text style={styles.label}>Quelle est la capacité du réservoir ?</Text>
           <View style={styles.row}>
             <View style={styles.fakeInputSmall}>
               <Text style={styles.fakeInputText}>{capacity}</Text>
             </View>
             <Text style={styles.unit}>litres</Text>
           </View>
-          <Text style={styles.hint}>Most drivers know this. We will correct it from your first two fills.</Text>
+          <Text style={styles.hint}>
+            La plupart des chauffeurs connaissent ce chiffre. Nous le corrigerons avec tes deux
+            premiers pleins.
+          </Text>
         </View>
 
         <View style={styles.question}>
-          <Text style={styles.label}>How many km do you drive in a day?</Text>
+          <Text style={styles.label}>Combien de km fais-tu par jour ?</Text>
           <View style={styles.fakeInput}>
             <Text style={styles.fakeInputText}>80</Text>
           </View>
-          <Text style={styles.hint}>Only used to show today's pace.</Text>
+          <Text style={styles.hint}>Utilisé uniquement pour estimer le rythme du jour.</Text>
         </View>
       </View>
 
       <View style={styles.footer}>
-        <ActionButton label="START" icon="→" onPress={() => {}} tone="primary" />
+        <ActionButton label="COMMENCER" icon="→" onPress={() => {}} tone="primary" />
       </View>
     </View>
   );

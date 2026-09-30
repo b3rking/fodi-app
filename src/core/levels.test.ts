@@ -22,11 +22,11 @@ describe('FILL_LEVELS', () => {
 
 describe('levelLabel', () => {
   it('uses words for the ends and fractions in the middle', () => {
-    expect(levelLabel('empty')).toBe('Empty');
+    expect(levelLabel('empty')).toBe('Vide');
     expect(levelLabel('quarter')).toBe('¼');
     expect(levelLabel('half')).toBe('½');
     expect(levelLabel('three_quarter')).toBe('¾');
-    expect(levelLabel('full')).toBe('Full');
+    expect(levelLabel('full')).toBe('Plein');
   });
 
   it('has a label for every preset', () => {
@@ -36,6 +36,6 @@ describe('levelLabel', () => {
   });
 
   it('gives the full tank the most obvious label, since it is the common case', () => {
-    expect(levelLabel('full')).toBe('Full');
+    expect(levelLabel('full')).toBe('Plein');
   });
 });
