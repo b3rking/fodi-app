@@ -1,41 +1,12 @@
 /**
- * Design tokens.
+ * Typography, spacing and radii.
  *
- * Dark first: a driver reads this at night in a car, and a bright screen at
- * night is both uncomfortable and a tell. Big type, big touch targets, and
- * colour used only for one thing at a time — the verdict.
+ * Colours are NOT here: they change at runtime with the theme, so they come
+ * from `useTheme()`. Anything that needs a colour takes it from the palette.
+ *
+ * Android minimum comfortable target is 48dp; the action buttons go larger.
  */
 
-export const colors = {
-  bg: '#0B0F14',
-  surface: '#141A22',
-  surfaceAlt: '#1C2430',
-  border: '#26303D',
-
-  text: '#F2F5F8',
-  textMuted: '#8A97A6',
-  textFaint: '#5A6673',
-
-  /** Green / amber / red are reserved for the verdict. Nothing else uses them. */
-  good: '#2FBF71',
-  goodDim: '#12341F',
-  warn: '#E8A33D',
-  warnDim: '#33260F',
-  bad: '#E5484D',
-  badDim: '#3A1517',
-
-  accent: '#3B82F6',
-  accentDim: '#12233F',
-} as const;
-
-export const verdictColors = {
-  making_money: { fg: colors.good, bg: colors.goodDim },
-  breaking_even: { fg: colors.warn, bg: colors.warnDim },
-  losing_money: { fg: colors.bad, bg: colors.badDim },
-  not_enough_data: { fg: colors.textMuted, bg: colors.surfaceAlt },
-} as const;
-
-/** Android minimum comfortable target is 48dp; the action buttons go larger. */
 export const space = {
   xs: 4,
   sm: 8,

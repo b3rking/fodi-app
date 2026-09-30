@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
+import type { Colors } from '../../core/theme';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, EmptyState } from '../../ui/components';
-import { colors, space } from '../../ui/tokens';
+import { space } from '../../ui/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { fbu } from '../../core/format';
 import { MarginGauge, TankGauge } from '../../ui/gauge';
@@ -11,6 +13,9 @@ import { Row } from '../../ui/components';
 
 /** Fuel. Built in P4 — the tank and break-even cards are wired to real data already. */
 export default function FuelScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const insets = useSafeAreaInsets();
   const { tank, efficiency, breakEven, cycleText } = useAppStore();
 
@@ -54,7 +59,8 @@ export default function FuelScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   pad: { paddingHorizontal: space.lg, gap: space.md, paddingBottom: space.xxl },
-});
+  });

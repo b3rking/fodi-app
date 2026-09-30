@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
+import type { Colors } from '../../core/theme';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
 import { ActionButton, Card, Divider, Label, Row, Stat } from '../../ui/components';
 import { MarginGauge, TankGauge } from '../../ui/gauge';
-import { colors, font, radius, space, verdictColors } from '../../ui/tokens';
+import { font, radius, space } from '../../ui/tokens';
 import { verdictLabel } from '../../core/fuel/breakeven';
+import { SettingsSheet } from '../../ui/settings-sheet';
 import { fbu, kmPerLitre, litres, pct } from '../../core/format';
 import { kmLeftInTank, unrecoveredFuelMoney, blendedPrice, isAtReserve } from '../../core/fuel/engine';
 import { relativeDays } from '../../core/format';
@@ -22,12 +25,16 @@ import { relativeDays } from '../../core/format';
  * grows a seventh thing to read, it has stopped doing its job.
  */
 export default function TodayScreen() {
+  const { colors, verdict } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { ready, today, perKm, tank, efficiency, breakEven, breakEvenText, warnings, error } =
     useAppStore();
   const recompute = useAppStore((s) => s.recompute);
   const [refreshing, setRefreshing] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (!ready) void recompute();
@@ -48,7 +55,8 @@ export default function TodayScreen() {
     );
   }
 
-  const verdict = verdictColors[breakEven.verdict];
+  const verdictStyle = verdict[breakEven.verdict];
+void verdictStyle;
   const tankValue = unrecoveredFuelMoney(tank);
   const kmLeft = kmLeftInTank(tank, efficiency);
   const atReserve = isAtReserve(tank);
@@ -61,10 +69,20 @@ export default function TodayScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.date}>{todayLabel()}</Text>
-        <Text style={styles.tankChip}>
-          Tank {litres(tank.litres)}
-        </Text>
+        <View style={styles.headerRight}>
+          <Text style={styles.tankChip}>Tank {litres(tank.litres)}</Text>
+          <Pressable
+            onPress={() => setSettingsOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            style={styles.gear}
+          >
+            <Text style={styles.gearGlyph}>⚙</Text>
+          </Pressable>
+        </View>
       </View>
+
+      <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* 1. Did I make money? */}
       <Card style={styles.heroCard}>
@@ -93,10 +111,10 @@ export default function TodayScreen() {
       </Card>
 
       {/* 2. Am I running without making money? */}
-      <Card style={[styles.verdictCard, { borderColor: verdict.fg }]}>
-        <View style={[styles.verdictChip, { backgroundColor: verdict.bg }]}>
-          <View style={[styles.dot, { backgroundColor: verdict.fg }]} />
-          <Text style={[styles.verdictLabel, { color: verdict.fg }]}>
+      <Card style={[styles.verdictCard, { borderColor: verdictStyle.fg }]}>
+        <View style={[styles.verdictChip, { backgroundColor: verdictStyle.bg }]}>
+          <View style={[styles.dot, { backgroundColor: verdictStyle.fg }]} />
+          <Text style={[styles.verdictLabel, { color: verdictStyle.fg }]}>
             {verdictLabel(breakEven.verdict)}
           </Text>
         </View>
@@ -200,13 +218,26 @@ function todayLabel(): string {
   });
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { paddingHorizontal: space.lg, gap: space.md },
   center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.xl },
   errorTitle: { ...font.title, color: colors.bad, marginBottom: space.sm },
   errorBody: { ...font.body, color: colors.textMuted, textAlign: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  gear: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  gearGlyph: { fontSize: 17, color: colors.textMuted },
   date: { ...font.title, color: colors.text },
   tankChip: {
     ...font.small,
@@ -249,4 +280,4 @@ const styles = StyleSheet.create({
   warnText: { ...font.small, color: colors.warn, lineHeight: 20 },
   actions: { flexDirection: 'row', gap: space.sm },
   statRow: { flexDirection: 'row' },
-});
+  });

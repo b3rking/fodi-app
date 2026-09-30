@@ -10,7 +10,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from './tokens';
+import { font, radius, space } from './tokens';
+import { useTheme, useThemedStyles } from './ThemeProvider';
+import type { Colors } from '../core/theme';
 
 /**
  * A bottom sheet.
@@ -34,6 +36,8 @@ export function Sheet({
   footer?: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -73,6 +77,8 @@ export function Field({
   hint?: string;
   children: React.ReactNode;
 }) {
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
@@ -93,6 +99,8 @@ export function BigButton({
   disabled?: boolean;
   tone?: 'primary' | 'danger';
 }) {
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <Pressable
       onPress={onPress}
@@ -111,6 +119,8 @@ export function BigButton({
 
 /** The live plain-English explanation shown while he types. */
 export function Preview({ children }: { children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.preview}>
       <Text style={styles.previewText}>{children}</Text>
@@ -119,6 +129,8 @@ export function Preview({ children }: { children: React.ReactNode }) {
 }
 
 export function Warning({ children }: { children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.warning}>
       <Text style={styles.warningText}>{children}</Text>
@@ -126,8 +138,9 @@ export function Warning({ children }: { children: React.ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: colors.scrim, justifyContent: 'flex-end' },
   backdropTap: { flex: 1 },
   sheetWrap: { maxHeight: '92%' },
   sheet: {
@@ -180,4 +193,4 @@ const styles = StyleSheet.create({
     padding: space.md,
   },
   warningText: { ...font.small, color: colors.warn, lineHeight: 20 },
-});
+  });

@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
-import { colors, font, radius, space } from './tokens';
+import { font, radius, space } from './tokens';
+import { useTheme, useThemedStyles } from './ThemeProvider';
+import type { Colors } from '../core/theme';
 
 /**
  * A large numeric input.
@@ -15,6 +17,9 @@ export function BigField({
   suffix,
   ...rest
 }: TextInputProps & { suffix?: string }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.wrap}>
       <TextInput
@@ -31,7 +36,8 @@ export function BigField({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -49,4 +55,4 @@ const styles = StyleSheet.create({
     paddingVertical: space.md,
   },
   suffix: { ...font.body, color: colors.textMuted, marginLeft: space.sm },
-});
+  });
