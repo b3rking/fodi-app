@@ -43,3 +43,5 @@ yarn-error.*
 # build output
 dist-check/
 coverage/
+# expo generated typed routes
+.expo/

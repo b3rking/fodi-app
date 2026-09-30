@@ -80,10 +80,20 @@ export async function updateVehicleOdometer(db: SQLiteDatabase, id: number, km: 
 
 // --- trips -----------------------------------------------------------------
 
-export async function insertTrip(
-  db: SQLiteDatabase,
-  t: Omit<TripRow, 'id' | 'fuel_cost'>
-): Promise<number> {
+export interface NewTrip {
+  ts: string;
+  from_place: string;
+  to_place: string;
+  km: number;
+  fare: number;
+  extras: number;
+  fuel_l: number | null;
+  odo_from_km?: number | null;
+  odo_to_km?: number | null;
+  note: string | null;
+}
+
+export async function insertTrip(db: SQLiteDatabase, t: NewTrip): Promise<number> {
   const r = await db.runAsync(
     `INSERT INTO trip (ts, from_place, to_place, km, fare, extras, fuel_l, odo_from_km, odo_to_km, note)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
@@ -94,8 +104,8 @@ export async function insertTrip(
     t.fare,
     t.extras,
     t.fuel_l,
-    (t as TripRow & { odo_from_km?: number }).odo_from_km ?? null,
-    (t as TripRow & { odo_to_km?: number }).odo_to_km ?? null,
+    t.odo_from_km ?? null,
+    t.odo_to_km ?? null,
     t.note
   );
   return r.lastInsertRowId;
