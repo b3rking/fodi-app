@@ -23,13 +23,36 @@ export const radius = {
   pill: 999,
 } as const;
 
+/**
+ * Product Sans.
+ *
+ * Weights actually shipped with the font are 400, 500 and 700 only. Android
+ * fakes any other weight, and fake bold on large numbers looks smeared, so
+ * every style maps onto a real weight rather than inventing one.
+ */
+export const FONT_FAMILY = {
+  regular: 'ProductSans_400Regular',
+  medium: 'ProductSans_500Medium',
+  bold: 'ProductSans_700Bold',
+} as const;
+
 export const font = {
-  hero: { fontSize: 44, fontWeight: '800' as const, letterSpacing: -1 },
-  title: { fontSize: 20, fontWeight: '700' as const },
-  body: { fontSize: 16, fontWeight: '400' as const },
-  bodyStrong: { fontSize: 16, fontWeight: '600' as const },
-  small: { fontSize: 14, fontWeight: '400' as const },
-  tiny: { fontSize: 12, fontWeight: '500' as const },
+  hero: {
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: 44,
+    letterSpacing: -1,
+  },
+  title: { fontFamily: FONT_FAMILY.bold, fontSize: 20 },
+  body: { fontFamily: FONT_FAMILY.regular, fontSize: 16 },
+  bodyStrong: { fontFamily: FONT_FAMILY.medium, fontSize: 16 },
+  small: { fontFamily: FONT_FAMILY.regular, fontSize: 14 },
+  tiny: { fontFamily: FONT_FAMILY.medium, fontSize: 12 },
   /** Section headers read as labels, not headlines. */
-  label: { fontSize: 12, fontWeight: '700' as const, letterSpacing: 1 },
+  label: { fontFamily: FONT_FAMILY.bold, fontSize: 12, letterSpacing: 1 },
+} as const;
+
+/** Tab bar labels and system chrome use the same family. */
+export const chromeFont = {
+  fontFamily: FONT_FAMILY.medium,
+  fontSize: 11,
 } as const;

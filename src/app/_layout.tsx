@@ -3,9 +3,17 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { ThemeProvider, useTheme } from '../ui/ThemeProvider';
+import { useAppFonts } from '../ui/fonts';
 import { useAppStore } from '../store/useAppStore';
+import { FONT_FAMILY } from '../ui/tokens';
 
 export default function RootLayout() {
+  const fontsLoaded = useAppFonts();
+
+  // Hold the first frame until the font is in memory, otherwise every number
+  // visibly reflows once it arrives.
+  if (!fontsLoaded) return null;
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>
@@ -35,7 +43,7 @@ function StackHost() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
-        headerTitleStyle: { fontWeight: '700' },
+        headerTitleStyle: { fontFamily: FONT_FAMILY.bold },
         contentStyle: { backgroundColor: colors.bg },
       }}
     >

@@ -12,7 +12,15 @@
  * coûte cher.
  */
 
-const NBSP = ' ';
+/**
+ * Espace insécable (U+00A0) pour le séparateur de milliers.
+ *
+ * Pas U+202F (espace fine insécable) : Product Sans ne contient pas ce
+ * caractère, il s'afficherait avec la police de repli et casserait la lecture
+ * des montants. U+00A0 est la convention française traditionnelle et il est
+ * bien présent dans la police.
+ */
+const NBSP = ' ';
 
 /** FBu = Franc Burundais. Utilisé partout. */
 const UNIT = 'FBu';

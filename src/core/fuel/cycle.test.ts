@@ -3,8 +3,8 @@ import { computeCycle, explainCycle } from './cycle';
 import { consume, emptyTank, refill } from './engine';
 
 const CAP = 60;
-/** The formatter groups digits with U+202F, not a plain space. */
-const NBSP = '\u202F';
+/** Doit correspondre a format.ts : espace insecable U+00A0. */
+const NBSP = ' ';
 
 const FILL_12 = {
   id: 'fill-12',

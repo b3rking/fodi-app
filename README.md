@@ -12,6 +12,21 @@ The full design and build plan is in [`PLAN.md`](./PLAN.md).
 
 ---
 
+## Typographie
+
+**Product Sans** (400 / 500 / 700), embarquée localement dans `assets/fonts/`.
+Ce n'est pas une police publiée dans `@expo-google-fonts`, d'où le téléchargement
+direct des fichiers TTF depuis Google Fonts.
+
+Seules les graisses 400, 500 et 700 existent. Tous les styles mappent donc sur une
+gravité réelle plutôt que de laisser Android fabriquer un faux gras — sur de
+grands nombres, un faux gras a l'air baveux.
+
+> **À vérifier avant toute publication :** Product Sans est distribuée sous la
+> licence Google Fonts « restreinte » (`googlerestricted`). L'usage courant est
+> autorisé, mais la police ne doit pas être modifiée ni transformée en œuvre
+> dérivée. Pour une vente commerciale hors Google, mieux vaut confirmer.
+
 ## Langue
 
 L'interface est **entièrement en français**. Les phrases générées par le moteur

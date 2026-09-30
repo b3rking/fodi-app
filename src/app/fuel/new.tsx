@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BigButton, Field, Preview, Sheet, Warning } from '../../ui/sheet';
 import { useAppStore } from '../../store/useAppStore';
-import { font, radius, space } from '../../ui/tokens';
+import { font, radius, space, FONT_FAMILY } from '../../ui/tokens';
 import { TankGauge } from '../../ui/gauge';
 import { BigField } from '../../ui/input';
 import { FILL_LEVELS, levelLabel, type LevelPreset } from '../../core/levels';
@@ -223,6 +223,6 @@ const makeStyles = (colors: Colors) =>
   },
   levelButtonActive: { backgroundColor: colors.accentDim, borderColor: colors.accent },
   levelText: { ...font.tiny, color: colors.textMuted },
-  levelTextActive: { color: colors.text, fontWeight: '700' },
+  levelTextActive: { color: colors.text, fontFamily: FONT_FAMILY.bold },
   gaugeWrap: { marginBottom: space.lg },
   });

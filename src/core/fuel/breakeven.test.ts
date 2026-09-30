@@ -9,8 +9,8 @@ import {
 import { consume, emptyTank, refill } from './engine';
 
 const CAP = 60;
-/** The formatter groups digits with U+202F, not a plain space. */
-const NBSP = '\u202F';
+/** Doit correspondre a format.ts : espace insecable U+00A0. */
+const NBSP = ' ';
 
 /** The tank from the plan: 45 L at 3 800, then 22.5 L burned → 22.5 L left. */
 function tankAt3800() {

@@ -11,7 +11,8 @@ import {
   relativeDays,
 } from './format';
 
-const NBSP = '\u202F';
+/** Doit correspondre a la constante de format.ts : U+00A0, pas U+202F. */
+const NBSP = ' ';
 
 describe('fbu', () => {
   it('groups thousands the French/Burundian way', () => {

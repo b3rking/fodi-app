@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
 import type { Colors } from '../../core/theme';
 import { StyleSheet, Text, type ColorValue } from 'react-native';
-import { font } from '../../ui/tokens';
+import { font, chromeFont } from '../../ui/tokens';
 
 /**
  * Five tabs. Not six.
@@ -27,7 +27,7 @@ export default function TabsLayout() {
           paddingBottom: 8,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: chromeFont,
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Aujourd'hui", tabBarIcon: (p) => <Glyph glyph="◉" {...p} /> }} />

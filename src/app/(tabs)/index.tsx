@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
 import { ActionButton, Card, Divider, Label, Row, Stat } from '../../ui/components';
 import { MarginGauge, TankGauge } from '../../ui/gauge';
-import { font, radius, space } from '../../ui/tokens';
+import { font, radius, space, FONT_FAMILY } from '../../ui/tokens';
 import { verdictLabel } from '../../core/fuel/breakeven';
 import { SettingsSheet } from '../../ui/settings-sheet';
 import { fbu, kmPerLitre, litres, pct } from '../../core/format';
@@ -263,11 +263,11 @@ const makeStyles = (colors: Colors) =>
     gap: space.sm,
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  verdictLabel: { ...font.small, fontWeight: '800', letterSpacing: 0.5 },
+  verdictLabel: { ...font.small, fontFamily: FONT_FAMILY.bold, letterSpacing: 0.5 },
   reason: { ...font.body, color: colors.text, lineHeight: 22 },
   marginRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, alignItems: 'baseline' },
   marginCaption: { ...font.tiny, color: colors.textFaint },
-  marginValue: { ...font.small, color: colors.text, fontWeight: '700', marginRight: space.md },
+  marginValue: { ...font.small, color: colors.text, fontFamily: FONT_FAMILY.bold, marginRight: space.md },
   gaugeWrap: { marginVertical: space.md },
   warnBox: {
     backgroundColor: colors.warnDim,

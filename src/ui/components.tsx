@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { font, radius, space } from './tokens';
+import { font, radius, space, FONT_FAMILY } from './tokens';
 import { useTheme, useThemedStyles } from './ThemeProvider';
 import type { Colors } from '../core/theme';
 
@@ -156,7 +156,7 @@ const makeStyles = (colors: Colors) =>
   actionPrimary: { backgroundColor: colors.accentDim, borderColor: colors.accent },
   actionPressed: { opacity: 0.7 },
   actionIcon: { fontSize: 22, marginBottom: 4 },
-  actionLabel: { ...font.small, color: colors.text, fontWeight: '600' },
+  actionLabel: { ...font.small, color: colors.text, fontFamily: FONT_FAMILY.medium },
   empty: { padding: space.xl, alignItems: 'center' },
   emptyTitle: { ...font.title, color: colors.text, marginBottom: space.sm, textAlign: 'center' },
   emptyBody: { ...font.body, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
@@ -181,5 +181,5 @@ const makeStyles = (colors: Colors) =>
   },
   chipActive: { backgroundColor: colors.accentDim, borderColor: colors.accent },
   chipLabel: { ...font.small, color: colors.textMuted },
-  chipLabelActive: { color: colors.text, fontWeight: '600' },
+  chipLabelActive: { color: colors.text, fontFamily: FONT_FAMILY.medium },
   });

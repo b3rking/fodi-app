@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
-import { radius } from './tokens';
+import { radius, FONT_FAMILY } from './tokens';
 import { useTheme, useThemedStyles } from './ThemeProvider';
 import type { Colors } from '../core/theme';
 
@@ -124,7 +124,7 @@ export function MarginGauge({
   );
 }
 
-const captionStyle = { fontSize: 12, fontWeight: '500' as const };
+const captionStyle = { fontFamily: FONT_FAMILY.medium, fontSize: 12 };
 
 /** Horizontal bars for category breakdowns. No axes, no labels to decode. */
 export function BarList({

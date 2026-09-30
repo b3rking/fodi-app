@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { BigButton, Field, Sheet } from '../../ui/sheet';
 import { BigField } from '../../ui/input';
 import { useAppStore } from '../../store/useAppStore';
-import { font, radius, space } from '../../ui/tokens';
+import { font, radius, space, FONT_FAMILY } from '../../ui/tokens';
 import { insertExpense } from '../../db/queries';
 import { COST_CATEGORIES } from '../../db/schema';
 
@@ -106,7 +106,7 @@ const makeStyles = (colors: Colors) =>
   },
   chipActive: { backgroundColor: colors.accentDim, borderColor: colors.accent },
   chipText: { ...font.small, color: colors.textMuted },
-  chipTextActive: { color: colors.text, fontWeight: '600' },
+  chipTextActive: { color: colors.text, fontFamily: FONT_FAMILY.medium },
   input: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
