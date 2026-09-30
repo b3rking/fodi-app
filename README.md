@@ -101,16 +101,23 @@ src/
       cycle.ts          tank-cycle recovery
       allocate.ts       split burned fuel across trips by km
     format.ts           FBu, km, L — grouped the French/Burundian way
+    theme.ts            dark/light palettes and the system-follow rule
+    levels.ts           the five tank-level buttons
     backup.ts           mirroring, share sheet, restore
     lock.ts             the PIN
   db/                   schema, queries, tank rebuild
   store/                zustand + one recompute
-  ui/                   tokens, components, gauges
+  ui/                   tokens, components, gauges, ThemeProvider, sheets
 ```
 
 **The architecture rule:** all money and fuel logic is pure functions in
 `src/core` with zero React and zero SQLite imports. The UI only renders their
 output. That is what makes the risky part testable.
+
+**Theming:** `tokens.ts` holds only typography, spacing and radii. Colour comes
+from `useTheme()`. Each screen builds its stylesheet through `makeStyles(colors)`
+and `useThemedStyles`, so switching theme rebuilds the styles instead of leaving
+them stale.
 
 ---
 
@@ -138,11 +145,11 @@ with no backend there is no safe way to lose one.
 
 | Phase | State |
 |---|---|
-| P0 Scaffold | done — Expo SDK 57, router, 5 tabs, dark UI kit |
+| P0 Scaffold | done — Expo SDK 57, router, 5 tabs, UI kit |
 | P1 Data | done — schema, migrations, seeded categories, tank rebuild |
-| **P2 Fuel engine** | **done — 82 tests, 95% coverage, thresholds enforced** |
-| P3 Trips | planned |
-| P4 Fuel screen | planned |
+| **P2 Fuel engine** | **done — 99 tests, 95.9% coverage, thresholds enforced** |
+| P3 Trips | partial — entry sheet works, list screen still a placeholder |
+| P4 Fuel screen | partial — entry sheet works, fill history not built |
 | P5 Money | planned |
 | P6 Today | partial — cards render real data, entry sheets pending |
 | P7 Reports | planned |

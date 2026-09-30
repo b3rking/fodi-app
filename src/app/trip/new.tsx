@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
+import type { Colors } from '../../core/theme';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BigButton, Field, Preview, Sheet } from '../../ui/sheet';
 import { BigField } from '../../ui/input';
 import { useAppStore } from '../../store/useAppStore';
-import { colors, font, radius, space } from '../../ui/tokens';
+import { font, radius, space } from '../../ui/tokens';
 import { insertTrip, insertReading, recentPlaces } from '../../db/queries';
 import { estimateTripFuel } from '../../core/fuel/allocate';
 import { blendedPrice } from '../../core/fuel/engine';
@@ -18,6 +20,9 @@ import { fbu, kmPerLitre } from '../../core/format';
  * commits to the number he typed.
  */
 export default function TripNew() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const router = useRouter();
   const write = useAppStore((s) => s.write);
   const efficiency = useAppStore((s) => s.efficiency);
@@ -160,7 +165,8 @@ function parseNumber(text: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -182,4 +188,4 @@ const styles = StyleSheet.create({
   },
   chipText: { ...font.tiny, color: colors.textMuted },
   note: { ...font.tiny, color: colors.textFaint, marginTop: space.md },
-});
+  });

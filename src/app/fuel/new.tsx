@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
+import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
+import type { Colors } from '../../core/theme';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BigButton, Field, Preview, Sheet, Warning } from '../../ui/sheet';
 import { useAppStore } from '../../store/useAppStore';
-import { colors, font, radius, space } from '../../ui/tokens';
+import { font, radius, space } from '../../ui/tokens';
 import { TankGauge } from '../../ui/gauge';
 import { BigField } from '../../ui/input';
 import { FILL_LEVELS, levelLabel, type LevelPreset } from '../../core/levels';
@@ -20,6 +22,9 @@ import { blendedPrice, maxFillableL } from '../../core/fuel/engine';
  * entry will do to his tank and his fuel economy before he saves.
  */
 export default function FuelNew() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const router = useRouter();
   const write = useAppStore((s) => s.write);
   const tank = useAppStore((s) => s.tank);
@@ -192,7 +197,8 @@ function parseNumber(text: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -217,4 +223,4 @@ const styles = StyleSheet.create({
   levelText: { ...font.tiny, color: colors.textMuted },
   levelTextActive: { color: colors.text, fontWeight: '700' },
   gaugeWrap: { marginBottom: space.lg },
-});
+  });

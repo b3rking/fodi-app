@@ -1,6 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { colors, font, radius, space } from './tokens';
+import { font, radius, space } from './tokens';
+import { useTheme, useThemedStyles } from './ThemeProvider';
+import type { Colors } from '../core/theme';
 
 /** The building blocks. Every screen is made of these and nothing else. */
 
@@ -11,26 +13,33 @@ export function Card({
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
 export function Label({ children, style }: { children: React.ReactNode; style?: object }) {
+  const styles = useThemedStyles(makeStyles);
   return <Text style={[styles.label, style]}>{children}</Text>;
 }
 
 export function Muted({ children }: { children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
   return <Text style={styles.muted}>{children}</Text>;
 }
 
-export function Big({ children, color = colors.text }: { children: React.ReactNode; color?: string }) {
-  return <Text style={[styles.big, { color }]}>{children}</Text>;
+export function Big({ children, color }: { children: React.ReactNode; color?: string }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return <Text style={[styles.big, { color: color ?? colors.text }]}>{children}</Text>;
 }
 
 /** A labelled figure. The label is the plain word, never a symbol. */
-export function Stat({ label, value, color = colors.text }: { label: string; value: string; color?: string }) {
+export function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.stat}>
-      <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+      <Text style={[styles.statValue, { color: color ?? colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -38,16 +47,19 @@ export function Stat({ label, value, color = colors.text }: { label: string; val
   );
 }
 
-export function Row({ label, value, color = colors.text }: { label: string; value: string; color?: string }) {
+export function Row({ label, value, color }: { label: string; value: string; color?: string }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowValue, { color }]}>{value}</Text>
+      <Text style={[styles.rowValue, { color: color ?? colors.text }]}>{value}</Text>
     </View>
   );
 }
 
 export function Divider() {
+  const styles = useThemedStyles(makeStyles);
   return <View style={styles.divider} />;
 }
 
@@ -62,6 +74,7 @@ export function ActionButton({
   onPress: () => void;
   tone?: 'default' | 'primary';
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -89,6 +102,7 @@ export function EmptyState({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.empty}>
       <Text style={styles.emptyTitle}>{title}</Text>
@@ -103,6 +117,7 @@ export function EmptyState({
 }
 
 export function Chip({ label, active, onPress }: { label: string; active?: boolean; onPress?: () => void }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
       <Text style={[styles.chipLabel, active && styles.chipLabelActive]}>{label}</Text>
@@ -110,7 +125,8 @@ export function Chip({ label, active, onPress }: { label: string; active?: boole
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -166,4 +182,4 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.accentDim, borderColor: colors.accent },
   chipLabel: { ...font.small, color: colors.textMuted },
   chipLabelActive: { color: colors.text, fontWeight: '600' },
-});
+  });

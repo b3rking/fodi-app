@@ -1,6 +1,8 @@
 import { Tabs } from 'expo-router';
+import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
+import type { Colors } from '../../core/theme';
 import { StyleSheet, Text, type ColorValue } from 'react-native';
-import { colors, font } from '../../ui/tokens';
+import { font } from '../../ui/tokens';
 
 /**
  * Five tabs. Not six.
@@ -9,6 +11,9 @@ import { colors, font } from '../../ui/tokens';
  * belongs in a bottom sheet instead.
  */
 export default function TabsLayout() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <Tabs
       screenOptions={{
@@ -35,9 +40,12 @@ export default function TabsLayout() {
 }
 
 function Glyph({ glyph, color, size }: { glyph: string; color: ColorValue; size?: number }) {
+  const styles = useThemedStyles(makeStyles);
+
   return <Text style={[styles.glyph, { color, fontSize: size ?? 18 }]}>{glyph}</Text>;
 }
 
-const styles = StyleSheet.create({
-  glyph: { ...font.body, includeFontPadding: false },
-});
+const makeStyles = () =>
+  StyleSheet.create({
+    glyph: { ...font.body, includeFontPadding: false },
+  });

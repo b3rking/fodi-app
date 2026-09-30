@@ -1,7 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
-import { colors, radius } from './tokens';
+import { radius } from './tokens';
+import { useTheme, useThemedStyles } from './ThemeProvider';
+import type { Colors } from '../core/theme';
 
 /**
  * Tank gauge.
@@ -21,6 +23,9 @@ export function TankGauge({
   reserveL?: number;
   blendedPrice?: number | null;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const width = 320;
   const height = 28;
   const safeCapacity = capacityL > 0 ? capacityL : 1;
@@ -81,6 +86,9 @@ export function MarginGauge({
   breakEven: number | null;
   actual: number | null;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const width = 320;
   const height = 20;
   if (breakEven === null || actual === null || breakEven <= 0) {
@@ -124,6 +132,9 @@ export function BarList({
 }: {
   rows: { label: string; value: number; caption?: string }[];
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const max = Math.max(1, ...rows.map((r) => Math.abs(r.value)));
   return (
     <View style={{ gap: 10 }}>
@@ -152,7 +163,8 @@ export function BarList({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   captionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   caption: { ...captionStyle, color: colors.textMuted },
   gaugeFallback: { paddingVertical: 8 },
@@ -161,4 +173,4 @@ const styles = StyleSheet.create({
   barValue: { ...captionStyle, color: colors.textMuted },
   barTrack: { height: 8, backgroundColor: colors.surfaceAlt, borderRadius: 4, overflow: 'hidden' },
   barFill: { height: 8, backgroundColor: colors.accent, borderRadius: 4 },
-});
+  });

@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
+import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
+import type { Colors } from '../../core/theme';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BigButton, Field, Sheet } from '../../ui/sheet';
 import { BigField } from '../../ui/input';
 import { useAppStore } from '../../store/useAppStore';
-import { colors, font, radius, space } from '../../ui/tokens';
+import { font, radius, space } from '../../ui/tokens';
 import { insertExpense } from '../../db/queries';
 import { COST_CATEGORIES } from '../../db/schema';
 
 /** Add a cost. Fuel is deliberately absent: it has its own form and its own maths. */
 export default function CostNew() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const router = useRouter();
   const write = useAppStore((s) => s.write);
   const [amount, setAmount] = useState('');
@@ -88,7 +93,8 @@ function parseNumber(text: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   chips: { flexDirection: 'row', gap: space.sm, paddingRight: space.lg },
   chip: {
     paddingHorizontal: space.md,
@@ -111,4 +117,4 @@ const styles = StyleSheet.create({
     ...font.body,
     color: colors.text,
   },
-});
+  });

@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTheme, useThemedStyles } from '../ui/ThemeProvider';
+import type { Colors } from '../core/theme';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, font, radius, space } from '../ui/tokens';
+import { font, radius, space } from '../ui/tokens';
 import { ActionButton } from '../ui/components';
 
 /**
@@ -10,6 +12,9 @@ import { ActionButton } from '../ui/components';
  * with no carousel and no "skip". The whole point is to be out of the way.
  */
 export default function FirstRun() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const [capacity, setCapacity] = React.useState('60');
 
   return (
@@ -55,7 +60,8 @@ export default function FirstRun() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, justifyContent: 'space-between' },
   body: { padding: space.xl, gap: space.xl, flex: 1 },
   title: { ...font.hero, fontSize: 34, color: colors.text },
@@ -84,4 +90,4 @@ const styles = StyleSheet.create({
   unit: { ...font.body, color: colors.textMuted },
   hint: { ...font.tiny, color: colors.textFaint },
   footer: { padding: space.lg },
-});
+  });
