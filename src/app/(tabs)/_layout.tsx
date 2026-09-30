@@ -1,11 +1,12 @@
 import { Tabs } from 'expo-router';
-import { colors } from '../../ui/tokens';
+import { StyleSheet, Text, type ColorValue } from 'react-native';
+import { colors, font } from '../../ui/tokens';
 
 /**
  * Five tabs. Not six.
  *
- * Every tab answers exactly one question. Anything that would need a sixth
- * tab belongs in a bottom sheet instead.
+ * Every tab answers exactly one question. Anything that would need a sixth tab
+ * belongs in a bottom sheet instead.
  */
 export default function TabsLayout() {
   return (
@@ -24,16 +25,19 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: ({ color }) => <Icon glyph="◉" color={color} /> }} />
-      <Tabs.Screen name="trips" options={{ title: 'Trips', tabBarIcon: ({ color }) => <Icon glyph="→" color={color} /> }} />
-      <Tabs.Screen name="fuel" options={{ title: 'Fuel', tabBarIcon: ({ color }) => <Icon glyph="⛽" color={color} /> }} />
-      <Tabs.Screen name="money" options={{ title: 'Money', tabBarIcon: ({ color }) => <Icon glyph="₣" color={color} /> }} />
-      <Tabs.Screen name="reports" options={{ title: 'Reports', tabBarIcon: ({ color }) => <Icon glyph="▤" color={color} /> }} />
+      <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: (p) => <Glyph glyph="◉" {...p} /> }} />
+      <Tabs.Screen name="trips" options={{ title: 'Trips', tabBarIcon: (p) => <Glyph glyph="→" {...p} /> }} />
+      <Tabs.Screen name="fuel" options={{ title: 'Fuel', tabBarIcon: (p) => <Glyph glyph="⛽" {...p} /> }} />
+      <Tabs.Screen name="money" options={{ title: 'Money', tabBarIcon: (p) => <Glyph glyph="₣" {...p} /> }} />
+      <Tabs.Screen name="reports" options={{ title: 'Reports', tabBarIcon: (p) => <Glyph glyph="▤" {...p} /> }} />
     </Tabs>
   );
 }
 
-function Icon({ glyph, color }: { glyph: string; color: string }) {
-  const { Text } = require('react-native');
-  return <Text style={{ color, fontSize: 18 }}>{glyph}</Text>;
+function Glyph({ glyph, color, size }: { glyph: string; color: ColorValue; size?: number }) {
+  return <Text style={[styles.glyph, { color, fontSize: size ?? 18 }]}>{glyph}</Text>;
 }
+
+const styles = StyleSheet.create({
+  glyph: { ...font.body, includeFontPadding: false },
+});
