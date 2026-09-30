@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
 import { ActionButton, Card, Divider, Label, Row, Stat } from '../../ui/components';
 import { MarginGauge, TankGauge } from '../../ui/gauge';
-import { font, radius, space, FONT_FAMILY } from '../../ui/tokens';
+import { font, radius, space, FONT_FAMILY, TAB_BAR_CLEARANCE } from '../../ui/tokens';
 import { verdictLabel } from '../../core/fuel/breakeven';
 import { SettingsSheet } from '../../ui/settings-sheet';
 import { fbu, kmPerLitre, litres, pct } from '../../core/format';
@@ -63,7 +63,7 @@ export default function TodayScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md, paddingBottom: space.xxl }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md, paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.textMuted} />}
     >
       <View style={styles.header}>

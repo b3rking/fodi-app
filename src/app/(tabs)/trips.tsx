@@ -4,7 +4,7 @@ import type { Colors } from '../../core/theme';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, EmptyState, Label } from '../../ui/components';
-import { space } from '../../ui/tokens';
+import { space, TAB_BAR_CLEARANCE } from '../../ui/tokens';
 
 /** Trajets. Construit en P3. */
 export default function TripsScreen() {
@@ -13,7 +13,7 @@ export default function TripsScreen() {
 
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg }}>
+    <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }}>
       <View style={styles.pad}>
         <EmptyState
           title="Aucun trajet pour l’instant"
@@ -32,5 +32,5 @@ export default function TripsScreen() {
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  pad: { paddingHorizontal: space.lg },
+  pad: { paddingHorizontal: space.lg, paddingBottom: TAB_BAR_CLEARANCE },
   });

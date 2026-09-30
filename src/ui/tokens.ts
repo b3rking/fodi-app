@@ -56,3 +56,11 @@ export const chromeFont = {
   fontFamily: FONT_FAMILY.medium,
   fontSize: 11,
 } as const;
+
+/**
+ * Vertical room a scroll view must leave at the bottom.
+ *
+ * On Android the app draws edge-to-edge, so a scrolling screen extends behind
+ * the tab bar. Without this the last card sits under the buttons.
+ */
+export const TAB_BAR_CLEARANCE = 92;

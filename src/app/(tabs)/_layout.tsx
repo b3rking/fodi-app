@@ -1,8 +1,8 @@
 import { Tabs } from 'expo-router';
-import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
-import type { Colors } from '../../core/theme';
 import { StyleSheet, Text, type ColorValue } from 'react-native';
-import { font, chromeFont } from '../../ui/tokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { font, chromeFont, FONT_FAMILY } from '../../ui/tokens';
+import { useTheme } from '../../ui/ThemeProvider';
 
 /**
  * Five tabs. Not six.
@@ -12,7 +12,13 @@ import { font, chromeFont } from '../../ui/tokens';
  */
 export default function TabsLayout() {
   const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
+
+  // Android is edge-to-edge, so the tab bar has to reserve the gesture-bar /
+  // navigation-bar height itself. Hardcoding a height left the buttons sitting
+  // on top of the system bar on some devices.
+  const bottomPadding = Math.max(insets.bottom, 8) + 8;
+  const barHeight = 58 + bottomPadding;
 
   return (
     <Tabs
@@ -23,9 +29,9 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 6,
+          height: barHeight,
+          paddingBottom: bottomPadding,
+          paddingTop: 8,
         },
         tabBarLabelStyle: chromeFont,
       }}
@@ -40,12 +46,9 @@ export default function TabsLayout() {
 }
 
 function Glyph({ glyph, color, size }: { glyph: string; color: ColorValue; size?: number }) {
-  const styles = useThemedStyles(makeStyles);
-
   return <Text style={[styles.glyph, { color, fontSize: size ?? 18 }]}>{glyph}</Text>;
 }
 
-const makeStyles = () =>
-  StyleSheet.create({
-    glyph: { ...font.body, includeFontPadding: false },
-  });
+const styles = StyleSheet.create({
+  glyph: { ...font.body, includeFontPadding: false },
+});

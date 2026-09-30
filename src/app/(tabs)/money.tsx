@@ -4,7 +4,7 @@ import type { Colors } from '../../core/theme';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState } from '../../ui/components';
-import { space } from '../../ui/tokens';
+import { space, TAB_BAR_CLEARANCE } from '../../ui/tokens';
 
 /** Argent. Construit en P5. */
 export default function MoneyScreen() {
@@ -13,7 +13,7 @@ export default function MoneyScreen() {
 
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg }}>
+    <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }}>
       <EmptyState
         title="Aucune dépense enregistrée"
         body="Ajoute l’entretien, les données, le lavage et tout ce que tu dépenses sur la voiture. Le carburant est suivi séparément."

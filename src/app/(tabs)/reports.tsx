@@ -4,7 +4,7 @@ import type { Colors } from '../../core/theme';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState } from '../../ui/components';
-import { space } from '../../ui/tokens';
+import { space, TAB_BAR_CLEARANCE } from '../../ui/tokens';
 
 /** Rapports. Construit en P7. */
 export default function ReportsScreen() {
@@ -13,7 +13,7 @@ export default function ReportsScreen() {
 
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg }}>
+    <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }}>
       <EmptyState
         title="Rien à signaler pour l’instant"
         body="Après quelques jours de route, cette page te montrera ton bénéfice, ton coût au kilomètre et tes meilleures et mauvaises journées."

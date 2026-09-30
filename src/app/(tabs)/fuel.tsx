@@ -4,7 +4,7 @@ import type { Colors } from '../../core/theme';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, EmptyState } from '../../ui/components';
-import { space } from '../../ui/tokens';
+import { space, TAB_BAR_CLEARANCE } from '../../ui/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { fbu } from '../../core/format';
 import { MarginGauge, TankGauge } from '../../ui/gauge';
@@ -62,5 +62,5 @@ export default function FuelScreen() {
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  pad: { paddingHorizontal: space.lg, gap: space.md, paddingBottom: space.xxl },
+  pad: { paddingHorizontal: space.lg, gap: space.md, paddingBottom: TAB_BAR_CLEARANCE },
   });
