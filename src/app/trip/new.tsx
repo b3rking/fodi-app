@@ -1,28 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
-import type { Colors } from '../../core/theme';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BigButton, Field, Preview, Sheet } from '../../ui/sheet';
+import { BigButton, Field, Input, Preview, Sheet } from '../../ui/sheet';
 import { BigField } from '../../ui/input';
 import { useAppStore } from '../../store/useAppStore';
-import { font, radius, space } from '../../ui/tokens';
 import { insertTrip, insertReading, recentPlaces } from '../../db/queries';
 import { estimateTripFuel } from '../../core/fuel/allocate';
 import { blendedPrice } from '../../core/fuel/engine';
 import { fbu, kmPerLitre } from '../../core/format';
 
 /**
- * New trip.
+ * Nouveau trajet.
  *
- * Four taps for the common case: destination, distance, fare, save. The
- * preview does the arithmetic out loud so he can see the profit before he
- * commits to the number he typed.
+ * Quatre tapes pour le cas courant : destination, distance, prix, valider.
+ * L'aperçu fait le calcul à voix haute pour qu'il voie le bénéfice avant de
+ * valider le chiffre qu'il vient de taper.
  */
 export default function TripNew() {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-
   const router = useRouter();
   const write = useAppStore((s) => s.write);
   const efficiency = useAppStore((s) => s.efficiency);
@@ -49,9 +43,9 @@ export default function TripNew() {
   );
   const profit = fare !== null && fuel.cost !== null ? fare - fuel.cost : null;
 
-  const preview = useMemo(() => {
-    const fr = (n: number) => n.toFixed(1).replace('.', ',');
+  const fr = (n: number) => n.toFixed(1).replace('.', ',');
 
+  const preview = useMemo(() => {
     if (to.trim().length === 0) return 'Où vas-tu ?';
     if (km === null || km <= 0) return 'C’est combien de kilomètres ?';
     if (fare === null || fare <= 0) return 'Combien le client a-t-il payé ?';
@@ -62,13 +56,12 @@ export default function TripNew() {
       `${fr(km)} km pour ${fbu(fare)}.`,
       `Cela consomme environ ${fr(fuel.litres ?? 0)} L de carburant (${fbu(fuel.cost)}).`,
     ];
-    if (profit !== null) {
-      bits.push(`Bénéfice sur ce trajet ≈ ${fbu(profit)}.`);
-    }
+    if (profit !== null) bits.push(`Bénéfice sur ce trajet ≈ ${fbu(profit)}.`);
     return bits.join(' ');
   }, [to, km, fare, fuel, profit]);
 
-  const canSave = to.trim().length > 0 && km !== null && km > 0 && fare !== null && fare > 0 && !saving;
+  const canSave =
+    to.trim().length > 0 && km !== null && km > 0 && fare !== null && fare > 0 && !saving;
 
   const save = async () => {
     if (!canSave || km === null || fare === null) return;
@@ -91,7 +84,7 @@ export default function TripNew() {
           odo_to_km: odoAfter,
           note: null,
         });
-        // The odometer moves with the trip; the tank level does not.
+        // Le compteur avance avec le trajet ; le niveau du réservoir non.
         await insertReading(db, nowIso, odoAfter, tank.litres, 'trip');
         await db.runAsync('UPDATE vehicle SET odometer_km = ? WHERE is_default = 1;', odoAfter);
       });
@@ -107,89 +100,62 @@ export default function TripNew() {
       title="Nouveau trajet"
       subtitle="Destination, distance, prix. C’est tout."
       onClose={() => router.back()}
-      footer={<BigButton label={saving ? 'Enregistrement…' : 'Enregistrer le trajet'} onPress={save} disabled={!canSave} />}
+      footer={
+        <BigButton
+          label={saving ? 'Enregistrement…' : 'Enregistrer le trajet'}
+          onPress={save}
+          disabled={!canSave}
+        />
+      }
     >
       <Field label="Tu vas à">
-        <TextInput
-          value={to}
-          onChangeText={setTo}
-          placeholder="Rohero"
-          placeholderTextColor={colors.textFaint}
-          style={styles.input}
-        />
+        <Input value={to} onChangeText={setTo} placeholder="Rohero" />
         {places.length > 0 && (
-          <View style={styles.chips}>
-            {places.map((p) => (
-              <Pressable key={p} onPress={() => setTo(p)} style={styles.chip}>
-                <Text style={styles.chipText}>{p}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="mt-2 flex-row gap-2 pr-4">
+              {places.map((p) => (
+                <Pressable
+                  key={p}
+                  onPress={() => setTo(p)}
+                  className="rounded-chip border border-line bg-surface-alt px-3 py-1 active:opacity-70"
+                >
+                  <Text className="text-[11px] text-ink-muted">{p}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
         )}
       </Field>
 
       <Field label="Tu viens de" hint="Facultatif.">
-        <TextInput
-          value={from}
-          onChangeText={setFrom}
-          placeholder="Nyarugenge"
-          placeholderTextColor={colors.textFaint}
-          style={styles.input}
-        />
+        <Input value={from} onChangeText={setFrom} placeholder="Nyarugenge" />
       </Field>
 
       <Field label="Distance">
         <BigField value={kmText} onChangeText={setKmText} placeholder="0,0" suffix="km" />
       </Field>
 
-      <Field label="Prix payé" hint="Le pourboir ou le péage se met sur le trajet suivant, ou tu modifies celui-ci.">
+      <Field
+        label="Prix payé"
+        hint="Le pourboir ou le péage se met sur le trajet suivant, ou tu modifies celui-ci."
+      >
         <BigField value={fareText} onChangeText={setFareText} placeholder="0" suffix="FBU" />
       </Field>
 
       <Preview>{preview}</Preview>
 
-      {efficiency === null && (
-        <Text style={styles.note}>
-          Ton km/L n’est pas encore connu. Fais un plein une fois et nous le calculerons.
-        </Text>
-      )}
-      {efficiency !== null && (
-        <Text style={styles.note}>
-          Coût du carburant estimé avec ta moyenne de {kmPerLitre(efficiency)}.
-        </Text>
-      )}
+      <Text className="mt-3 text-[11px] text-ink-faint">
+        {efficiency === null
+          ? 'Ton km/L n’est pas encore connu. Fais un plein une fois et nous le calculerons.'
+          : `Coût du carburant estimé avec ta moyenne de ${kmPerLitre(efficiency)}.`}
+      </Text>
     </Sheet>
   );
 }
 
 function parseNumber(text: string): number | null {
-  const cleaned = text.replace(/[,\s]/g, '');
+  const cleaned = text.replace(/\s/g, '').replace(',', '.');
   if (cleaned.length === 0) return null;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 }
-
-const makeStyles = (colors: Colors) =>
-  StyleSheet.create({
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-    ...font.body,
-    color: colors.text,
-  },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
-  chip: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipText: { ...font.tiny, color: colors.textMuted },
-  note: { ...font.tiny, color: colors.textFaint, marginTop: space.md },
-  });

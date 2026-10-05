@@ -27,6 +27,7 @@
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
+    "lucide-react-native": "^1.52.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -39,6 +40,9 @@
   "devDependencies": {
     "@types/react": "~19.2.2",
     "@vitest/coverage-v8": "^3.2.4",
+    "babel-preset-expo": "^57.0.13",
+    "nativewind": "^4.2.7",
+    "tailwindcss": "^3.4.19",
     "typescript": "~6.0.3",
     "vitest": "^3.2.4"
   }

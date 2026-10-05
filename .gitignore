@@ -45,3 +45,6 @@ dist-check/
 coverage/
 # expo generated typed routes
 .expo/
+# nativewind
+dist-nw/
+dist-final/

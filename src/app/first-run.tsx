@@ -1,96 +1,85 @@
-import React from 'react';
-import { useTheme, useThemedStyles } from '../ui/ThemeProvider';
-import type { Colors } from '../core/theme';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { font, radius, space } from '../ui/tokens';
-import { ActionButton } from '../ui/components';
+import React, { useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { BigButton } from '../ui/sheet';
 
 /**
- * First run: three questions, then straight to work.
+ * Premier lancement : trois questions, puis on travaille.
  *
- * A driver skips onboarding if it is long, so this is deliberately one screen
- * with no carousel and no "skip". The whole point is to be out of the way.
+ * Un chauffeur saute une partie d'introduction si elle est longue. Donc un seul
+ * écran, pas de carrousel et pas de « passer ». Tout l'objectif est de ne pas
+ * gêner.
  */
 export default function FirstRun() {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-
-  const [capacity, setCapacity] = React.useState('60');
+  const [capacity, setCapacity] = useState('60');
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.body}>
-        <Text style={styles.title}>Bienvenue sur Fodi</Text>
-        <Text style={styles.subtitle}>
-          Il garde trace de ton carburant, de tes trajets et de ton bénéfice, et te dit quand tu
-          perds de l’argent. Trois questions rapides et c’est terminé.
-        </Text>
-
-        <View style={styles.question}>
-          <Text style={styles.label}>Comment appelle-t-on ta voiture ?</Text>
-          <View style={styles.fakeInput}>
-            <Text style={styles.fakeInputText}>Mon taxi</Text>
+    <SafeAreaView className="flex-1 bg-bg">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 24, flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="flex-1 justify-center gap-8">
+          <View>
+            <Text className="text-[34px] font-bold tracking-tight text-ink">Bienvenue sur Fodi</Text>
+            <Text className="mt-2 text-body leading-[22px] text-ink-muted">
+              Il garde trace de ton carburant, de tes trajets et de ton bénéfice, et te dit quand
+              tu perds de l’argent. Trois questions rapides et c’est terminé.
+            </Text>
           </View>
-        </View>
 
-        <View style={styles.question}>
-          <Text style={styles.label}>Quelle est la capacité du réservoir ?</Text>
-          <View style={styles.row}>
-            <View style={styles.fakeInputSmall}>
-              <Text style={styles.fakeInputText}>{capacity}</Text>
+          <Question label="Comment appelle-t-on ta voiture ?" value="Mon taxi" />
+
+          <Question label="Quelle est la capacité du réservoir ?">
+            <View className="flex-row items-center gap-3">
+              <View className="min-w-[110px] rounded-control border border-line bg-surface px-4 py-3.5">
+                <Text className="text-title font-bold text-ink">{capacity}</Text>
+              </View>
+              <Text className="text-body text-ink-muted">litres</Text>
             </View>
-            <Text style={styles.unit}>litres</Text>
-          </View>
-          <Text style={styles.hint}>
-            La plupart des chauffeurs connaissent ce chiffre. Nous le corrigerons avec tes deux
-            premiers pleins.
-          </Text>
+            <Text className="text-[11px] leading-4 text-ink-faint">
+              La plupart des chauffeurs connaissent ce chiffre. Nous le corrigerons avec tes deux
+              premiers pleins.
+            </Text>
+          </Question>
+
+          <Question
+            label="Combien de km fais-tu par jour ?"
+            hint="Utilisé uniquement pour estimer le rythme du jour."
+            value="80"
+          />
         </View>
 
-        <View style={styles.question}>
-          <Text style={styles.label}>Combien de km fais-tu par jour ?</Text>
-          <View style={styles.fakeInput}>
-            <Text style={styles.fakeInputText}>80</Text>
-          </View>
-          <Text style={styles.hint}>Utilisé uniquement pour estimer le rythme du jour.</Text>
+        <View className="pt-6">
+          <BigButton label="Commencer" onPress={() => {}} />
         </View>
-      </View>
-
-      <View style={styles.footer}>
-        <ActionButton label="COMMENCER" icon="→" onPress={() => {}} tone="primary" />
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const makeStyles = (colors: Colors) =>
-  StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, justifyContent: 'space-between' },
-  body: { padding: space.xl, gap: space.xl, flex: 1 },
-  title: { ...font.hero, fontSize: 34, color: colors.text },
-  subtitle: { ...font.body, color: colors.textMuted, lineHeight: 22, marginTop: space.sm },
-  question: { gap: space.sm },
-  label: { ...font.bodyStrong, color: colors.text },
-  fakeInput: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  fakeInputSmall: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-    minWidth: 110,
-  },
-  fakeInputText: { ...font.body, color: colors.text },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  unit: { ...font.body, color: colors.textMuted },
-  hint: { ...font.tiny, color: colors.textFaint },
-  footer: { padding: space.lg },
-  });
+function Question({
+  label,
+  hint,
+  value,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  value?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <View className="gap-2">
+      <Text className="text-body font-bold text-ink">{label}</Text>
+      {value !== undefined && (
+        <View className="rounded-control border border-line bg-surface px-4 py-3.5">
+          <Text className="text-body text-ink">{value}</Text>
+        </View>
+      )}
+      {children}
+      {hint && <Text className="text-[11px] leading-4 text-ink-faint">{hint}</Text>}
+    </View>
+  );
+}

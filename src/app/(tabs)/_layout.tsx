@@ -1,24 +1,33 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet, Text, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { font, chromeFont, FONT_FAMILY } from '../../ui/tokens';
+import type { ColorValue } from 'react-native';
 import { useTheme } from '../../ui/ThemeProvider';
+import { TAB_ICONS } from '../../ui/components';
 
 /**
- * Five tabs. Not six.
+ * Cinq onglets. Pas six.
  *
- * Every tab answers exactly one question. Anything that would need a sixth tab
- * belongs in a bottom sheet instead.
+ * Chaque onglet répond à exactement une question. Tout ce qui demanderait un
+ * sixième onglet appartient à une feuille.
  */
 export default function TabsLayout() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  // Android is edge-to-edge, so the tab bar has to reserve the gesture-bar /
-  // navigation-bar height itself. Hardcoding a height left the buttons sitting
-  // on top of the system bar on some devices.
+  // Android est en edge-to-edge : la barre d'onglets doit elle-même réserver la
+  // hauteur de la barre système. Une hauteur en dur la collait au bouton.
   const bottomPadding = Math.max(insets.bottom, 8) + 8;
   const barHeight = 58 + bottomPadding;
+
+  // React Navigation types the colour as ColorValue (it can be an opaque
+  // platform colour); Lucide needs a plain string, so narrow it here once.
+  const icon =
+    (name: keyof typeof TAB_ICONS) =>
+    ({ color, size }: { color: ColorValue; size: number }) => {
+      const Icon = TAB_ICONS[name];
+      const tint = typeof color === 'string' ? color : colors.text;
+      return <Icon size={size ?? 22} color={tint} strokeWidth={2} />;
+    };
 
   return (
     <Tabs
@@ -29,26 +38,22 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
+          borderTopWidth: 1,
           height: barHeight,
           paddingBottom: bottomPadding,
           paddingTop: 8,
         },
-        tabBarLabelStyle: chromeFont,
+        tabBarLabelStyle: {
+          fontFamily: 'ProductSans_500Medium',
+          fontSize: 11,
+        },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Aujourd'hui", tabBarIcon: (p) => <Glyph glyph="◉" {...p} /> }} />
-      <Tabs.Screen name="trips" options={{ title: 'Trajets', tabBarIcon: (p) => <Glyph glyph="→" {...p} /> }} />
-      <Tabs.Screen name="fuel" options={{ title: 'Carburant', tabBarIcon: (p) => <Glyph glyph="⛽" {...p} /> }} />
-      <Tabs.Screen name="money" options={{ title: 'Argent', tabBarIcon: (p) => <Glyph glyph="₣" {...p} /> }} />
-      <Tabs.Screen name="reports" options={{ title: 'Rapports', tabBarIcon: (p) => <Glyph glyph="▤" {...p} /> }} />
+      <Tabs.Screen name="index" options={{ title: "Aujourd'hui", tabBarIcon: icon('today') }} />
+      <Tabs.Screen name="trips" options={{ title: 'Trajets', tabBarIcon: icon('trips') }} />
+      <Tabs.Screen name="fuel" options={{ title: 'Carburant', tabBarIcon: icon('fuel') }} />
+      <Tabs.Screen name="money" options={{ title: 'Argent', tabBarIcon: icon('money') }} />
+      <Tabs.Screen name="reports" options={{ title: 'Rapports', tabBarIcon: icon('reports') }} />
     </Tabs>
   );
 }
-
-function Glyph({ glyph, color, size }: { glyph: string; color: ColorValue; size?: number }) {
-  return <Text style={[styles.glyph, { color, fontSize: size ?? 18 }]}>{glyph}</Text>;
-}
-
-const styles = StyleSheet.create({
-  glyph: { ...font.body, includeFontPadding: false },
-});

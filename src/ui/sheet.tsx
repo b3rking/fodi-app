@@ -5,20 +5,19 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { font, radius, space } from './tokens';
-import { useTheme, useThemedStyles } from './ThemeProvider';
-import type { Colors } from '../core/theme';
+import { X } from 'lucide-react-native';
+import { useTheme } from './ThemeProvider';
 
 /**
- * A bottom sheet.
+ * Une feuille qui monte du bas.
  *
- * New data is entered in a sheet, never a new screen. The rule keeps the app
- * at five tabs: if entering a trip needed its own screen, we would be at six.
+ * Les nouvelles données se saisissent dans une feuille, jamais sur un nouvel
+ * écran. Cette règle garde l'application à cinq onglets : si saisir un trajet
+ * exigeait son propre écran, on serait à six.
  */
 export function Sheet({
   visible,
@@ -37,30 +36,47 @@ export function Sheet({
 }) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={styles.backdropTap} onPress={onClose} accessibilityLabel="Fermer" />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.sheetWrap}
-        >
-          <View style={[styles.sheet, { paddingBottom: insets.bottom + space.md }]}>
-            <View style={styles.handle} />
-            <View style={styles.header}>
-              <Text style={styles.title}>{title}</Text>
-              {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      <View className="flex-1 justify-end bg-scrim">
+        <Pressable className="flex-1" onPress={onClose} accessibilityLabel="Fermer" />
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View
+            className="max-h-[92%] rounded-t-3xl border-t border-line bg-bg"
+            style={{ paddingBottom: insets.bottom + 12 }}
+          >
+            <View className="items-center pt-2">
+              <View className="h-1 w-10 rounded-full bg-line" />
             </View>
+
+            <View className="flex-row items-start justify-between px-4 pb-4 pt-3">
+              <View className="flex-1 pr-3">
+                <Text className="text-title font-bold text-ink">{title}</Text>
+                {subtitle && <Text className="mt-0.5 text-small text-ink-muted">{subtitle}</Text>}
+              </View>
+              <Pressable
+                onPress={onClose}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Fermer"
+                className="rounded-full bg-surface-alt p-2 active:opacity-70"
+              >
+                <X size={18} color={colors.textMuted} />
+              </Pressable>
+            </View>
+
             <ScrollView
-              style={styles.body}
+              className="px-4"
+              style={{ maxHeight: 520 }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
               {children}
+              <View className="h-4" />
             </ScrollView>
-            {footer && <View style={styles.footer}>{footer}</View>}
+
+            {footer && <View className="px-4 pt-2">{footer}</View>}
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -77,13 +93,11 @@ export function Field({
   hint?: string;
   children: React.ReactNode;
 }) {
-  const styles = useThemedStyles(makeStyles);
-
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+    <View className="mb-5 gap-2">
+      <Text className="text-body font-bold text-ink">{label}</Text>
       {children}
-      {hint && <Text style={styles.hint}>{hint}</Text>}
+      {hint && <Text className="text-[11px] leading-4 text-ink-faint">{hint}</Text>}
     </View>
   );
 }
@@ -99,98 +113,71 @@ export function BigButton({
   disabled?: boolean;
   tone?: 'primary' | 'danger';
 }) {
-  const styles = useThemedStyles(makeStyles);
-
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [
-        styles.bigButton,
-        tone === 'danger' && styles.bigButtonDanger,
-        disabled && styles.bigButtonDisabled,
-        pressed && !disabled && { opacity: 0.75 },
-      ]}
+      className={`items-center rounded-control py-4 active:opacity-75 ${
+        disabled
+          ? 'bg-surface-alt'
+          : tone === 'danger'
+            ? 'bg-bad'
+            : 'bg-accent'
+      }`}
     >
-      <Text style={styles.bigButtonLabel}>{label}</Text>
+      <Text className={`text-body font-bold ${disabled ? 'text-ink-faint' : 'text-ink'}`}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
-/** The live plain-English explanation shown while he types. */
+/** L'explication en français courant, mise à jour pendant la saisie. */
 export function Preview({ children }: { children: React.ReactNode }) {
-  const styles = useThemedStyles(makeStyles);
-
   return (
-    <View style={styles.preview}>
-      <Text style={styles.previewText}>{children}</Text>
+    <View className="rounded-control border border-accent bg-accent-dim px-3.5 py-3">
+      <Text className="text-small leading-[21px] text-ink">{children}</Text>
     </View>
   );
 }
 
 export function Warning({ children }: { children: React.ReactNode }) {
-  const styles = useThemedStyles(makeStyles);
-
   return (
-    <View style={styles.warning}>
-      <Text style={styles.warningText}>{children}</Text>
+    <View className="rounded-control border border-warn bg-warn-dim px-3.5 py-3">
+      <Text className="text-small leading-5 text-warn">{children}</Text>
     </View>
   );
 }
 
-const makeStyles = (colors: Colors) =>
-  StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: colors.scrim, justifyContent: 'flex-end' },
-  backdropTap: { flex: 1 },
-  sheetWrap: { maxHeight: '92%' },
-  sheet: {
-    backgroundColor: colors.bg,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: space.lg,
-    paddingTop: space.sm,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    marginBottom: space.md,
-  },
-  header: { marginBottom: space.lg },
-  title: { ...font.title, color: colors.text },
-  subtitle: { ...font.small, color: colors.textMuted, marginTop: 2 },
-  body: { marginBottom: space.lg },
-  footer: { paddingTop: space.sm },
-  field: { marginBottom: space.lg, gap: space.sm },
-  label: { ...font.bodyStrong, color: colors.text },
-  hint: { ...font.tiny, color: colors.textFaint },
-  bigButton: {
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    paddingVertical: space.lg,
-    alignItems: 'center',
-  },
-  bigButtonDanger: { backgroundColor: colors.bad },
-  bigButtonDisabled: { backgroundColor: colors.surfaceAlt },
-  bigButtonLabel: { ...font.bodyStrong, color: colors.text },
-  preview: {
-    backgroundColor: colors.accentDim,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    padding: space.md,
-  },
-  previewText: { ...font.small, color: colors.text, lineHeight: 21 },
-  warning: {
-    backgroundColor: colors.warnDim,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.warn,
-    padding: space.md,
-  },
-  warningText: { ...font.small, color: colors.warn, lineHeight: 20 },
-  });
+/** Champ de saisie standard. */
+export function Input({
+  value,
+  onChangeText,
+  placeholder,
+  keyboardType,
+}: {
+  value: string;
+  onChangeText: (t: string) => void;
+  placeholder?: string;
+  keyboardType?: 'default' | 'decimal-pad' | 'number-pad';
+}) {
+  return (
+    <TextInputShim
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      keyboardType={keyboardType}
+    />
+  );
+}
+
+import { TextInput as TextInputShimBase } from 'react-native';
+function TextInputShim(props: React.ComponentProps<typeof TextInputShimBase>) {
+  return (
+    <TextInputShimBase
+      {...props}
+      placeholderTextColor="#8492A0"
+      className="rounded-control border border-line bg-surface px-4 py-3.5 text-body text-ink"
+    />
+  );
+}

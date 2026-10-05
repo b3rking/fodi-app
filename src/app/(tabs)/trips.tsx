@@ -1,36 +1,25 @@
-import React from 'react';
-import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
-import type { Colors } from '../../core/theme';
-import { ScrollView, StyleSheet, View } from 'react-native';
+﻿import React from 'react';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, EmptyState, Label } from '../../ui/components';
-import { space, TAB_BAR_CLEARANCE } from '../../ui/tokens';
 
 /** Trajets. Construit en P3. */
 export default function TripsScreen() {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }}>
-      <View style={styles.pad}>
-        <EmptyState
-          title="Aucun trajet pour l’instant"
-          body="Note ton premier trajet et nous calculerons automatiquement ton km/L."
-          actionLabel="＋ Ajouter un trajet"
-          onAction={() => {}}
-        />
-        <Card>
-          <Label>FILTRES</Label>
-        </Card>
-      </View>
+    <ScrollView
+      className="flex-1 bg-bg"
+      contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 16, paddingBottom: 110 }}
+    >
+      <EmptyState
+        title="Aucun trajet pour l’instant"
+        body="Note ton premier trajet et nous calculerons automatiquement ton km/L."
+        actionLabel="＋ Ajouter un trajet"
+        onAction={() => {}}
+      />
+      <Card className="mt-2">
+        <Label>Filtres</Label>
+      </Card>
     </ScrollView>
   );
 }
-
-const makeStyles = (colors: Colors) =>
-  StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  pad: { paddingHorizontal: space.lg, paddingBottom: TAB_BAR_CLEARANCE },
-  });

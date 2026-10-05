@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme as useSystemColorScheme } from 'react-native';
+import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import {
   isThemeMode,
   palettes,
@@ -30,7 +31,8 @@ const ThemeContext = createContext<ThemeValue | null>(null);
  * because there is no account and no server to sync with.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const system = useColorScheme();
+  const system = useSystemColorScheme();
+  const { setColorScheme } = useNativeWindColorScheme();
   const db = useAppStore((s) => s.db);
   const [mode, setModeState] = useState<ThemeMode>('system');
 
@@ -47,6 +49,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [db]);
 
+  const scheme = resolveScheme(mode, system);
+
+  // Tell NativeWind which palette the `dark:` variants should compile against.
+  // This is what makes className="bg-bg dark:bg-bg" follow the driver's choice
+  // rather than only the OS setting.
+  useEffect(() => {
+    setColorScheme(scheme);
+  }, [scheme, setColorScheme]);
+
   const setMode = useCallback(
     (next: ThemeMode) => {
       setModeState(next);
@@ -56,7 +67,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  const scheme = resolveScheme(mode, system);
   const colors = palettes[scheme];
 
   const value = useMemo<ThemeValue>(
@@ -75,14 +85,3 @@ export function useTheme(): ThemeValue {
   return ctx;
 }
 
-/**
- * Build a StyleSheet for the active palette, rebuilt only when the theme
- * changes.
- *
- * `factory` must be a module-scope function (not an inline arrow) so its
- * identity is stable and the memo actually holds.
- */
-export function useThemedStyles<T>(factory: (colors: Colors) => T): T {
-  const { colors } = useTheme();
-  return useMemo(() => factory(colors), [colors, factory]);
-}

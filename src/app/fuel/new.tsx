@@ -1,34 +1,27 @@
 import React, { useMemo, useState } from 'react';
-import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
-import type { Colors } from '../../core/theme';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BigButton, Field, Preview, Sheet, Warning } from '../../ui/sheet';
-import { useAppStore } from '../../store/useAppStore';
-import { font, radius, space, FONT_FAMILY } from '../../ui/tokens';
-import { TankGauge } from '../../ui/gauge';
+import { BigButton, Field, Input, Preview, Sheet, Warning } from '../../ui/sheet';
 import { BigField } from '../../ui/input';
-import { FILL_LEVELS, levelLabel, type LevelPreset } from '../../core/levels';
+import { TankGauge } from '../../ui/gauge';
+import { useAppStore } from '../../store/useAppStore';
 import { insertFuelBuy, insertReading } from '../../db/queries';
 import { fbu, fbuPerLitre } from '../../core/format';
 import { blendedPrice, maxFillableL } from '../../core/fuel/engine';
+import { LEVEL_PRESETS, FILL_LEVELS, levelLabel, type LevelPreset } from '../../core/levels';
 
 /**
- * Fueled Up.
+ * Plein de carburant.
  *
- * The most important form in the app, because everything downstream depends on
- * it being right. It asks for two numbers (litres, price) plus which station,
- * and derives the rest. The live preview tells him in plain English what the
- * entry will do to his tank and his fuel economy before he saves.
+ * Le formulaire le plus important de l'application, parce que tout le reste en
+ * dépend. Il demande deux nombres (litres, prix) plus la station, et déduit le
+ * reste. L'aperçu en direct dit en français courant ce que cette saisie va
+ * faire au réservoir, avant d'enregistrer quoi que ce soit.
  */
 export default function FuelNew() {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-
   const router = useRouter();
   const write = useAppStore((s) => s.write);
   const tank = useAppStore((s) => s.tank);
-  const efficiency = useAppStore((s) => s.efficiency);
 
   const [litresText, setLitresText] = useState('');
   const [priceText, setPriceText] = useState('');
@@ -39,24 +32,22 @@ export default function FuelNew() {
   const litres = parseNumber(litresText);
   const price = parseNumber(priceText);
   const capacity = tank.capacityL;
-  const litresAfter = capacity * FILL_LEVELS[level];
   const litresBefore = tank.litres;
+  const litresAfter = capacity * FILL_LEVELS[level];
   const litresAfterBuy = litresBefore + (litres ?? 0);
   const burned = Math.max(0, litresBefore - litresAfter);
   const overfill = litres !== null && litres > maxFillableL(tank) + 0.01;
 
-  const preview = useMemo(() => {
-    const fr = (n: number) => n.toFixed(1).replace('.', ',');
+  const fr = (n: number) => n.toFixed(1).replace('.', ',');
 
+  const preview = useMemo(() => {
     if (litres === null || litres <= 0) {
       return 'Entre la quantité de carburant mise dans le réservoir.';
     }
     if (price === null || price <= 0) {
       return 'Maintenant, le prix par litre.';
     }
-
-    const parts: string[] = [];
-    parts.push(`Tu as mis ${fr(litres)} L pour ${fbu(litres * price)}.`);
+    const parts: string[] = [`Tu as mis ${fr(litres)} L pour ${fbu(litres * price)}.`];
 
     if (overfill) {
       parts.push(
@@ -65,15 +56,12 @@ export default function FuelNew() {
         )} L de place dans ${capacity} L.`
       );
     }
-
     if (burned > 0.01) {
       parts.push(`Depuis ton dernier plein, tu as brûlé ${fr(burned)} L.`);
     }
-
     if (litresAfterBuy <= capacity + 0.01) {
       parts.push(`Le réservoir contient maintenant ${fr(litresAfterBuy)} L sur ${capacity} L.`);
     }
-
     return parts.join(' ');
   }, [litres, price, overfill, burned, litresBefore, litresAfterBuy, capacity, maxFillableL(tank)]);
 
@@ -100,7 +88,7 @@ export default function FuelNew() {
           paid: 1,
           receipt_uri: null,
         });
-        // The reading is what the consumption maths is built on.
+        // La lecture est la base de tous les calculs de consommation.
         await insertReading(db, nowIso, odometer, litresAfter, 'fuel');
       });
       router.back();
@@ -109,13 +97,24 @@ export default function FuelNew() {
     }
   };
 
+  const newBlended =
+    price !== null && litresAfterBuy > 0
+      ? (tank.cost + (litres ?? 0) * (price ?? 0)) / litresAfterBuy
+      : blendedPrice(tank);
+
   return (
     <Sheet
       visible
       title="Plein de carburant"
       subtitle="Deux nombres et la station. Le reste, on s’en occupe."
       onClose={() => router.back()}
-      footer={<BigButton label={saving ? 'Enregistrement…' : 'Enregistrer ce plein'} onPress={save} disabled={!canSave} />}
+      footer={
+        <BigButton
+          label={saving ? 'Enregistrement…' : 'Enregistrer ce plein'}
+          onPress={save}
+          disabled={!canSave}
+        />
+      }
     >
       <Field label="Quantité mise dans le réservoir">
         <BigField
@@ -141,48 +140,47 @@ export default function FuelNew() {
       </Field>
 
       <Field label="Station">
-        <TextInput
-          value={station}
-          onChangeText={setStation}
-          placeholder="Nom de la station"
-          placeholderTextColor={colors.textFaint}
-          style={styles.input}
-        />
+        <Input value={station} onChangeText={setStation} placeholder="Nom de la station" />
       </Field>
 
       <Field
         label="Niveau du réservoir maintenant"
         hint="Cinq gros boutons. On ne te demande jamais de taper une fraction."
       >
-        <View style={styles.levels}>
-          {(['empty', 'quarter', 'half', 'three_quarter', 'full'] as LevelPreset[]).map((l) => (
-            <Pressable
-              key={l}
-              onPress={() => setLevel(l)}
-              style={[styles.levelButton, level === l && styles.levelButtonActive]}
-            >
-              <Text style={[styles.levelText, level === l && styles.levelTextActive]}>
-                {levelLabel(l)}
-              </Text>
-            </Pressable>
-          ))}
+        <View className="flex-row gap-2">
+          {LEVEL_PRESETS.map((l) => {
+            const active = level === l;
+            return (
+              <Pressable
+                key={l}
+                onPress={() => setLevel(l)}
+                className={`flex-1 items-center rounded-control border py-3 active:opacity-70 ${
+                  active ? 'border-accent bg-accent-dim' : 'border-line bg-surface-alt'
+                }`}
+              >
+                <Text className={`text-[11px] ${active ? 'font-bold text-ink' : 'text-ink-muted'}`}>
+                  {levelLabel(l)}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </Field>
 
-      <View style={styles.gaugeWrap}>
+      <View className="mb-5">
         <TankGauge
           litres={litresAfterBuy}
           capacityL={capacity}
           reserveL={tank.reserveL}
-          blendedPrice={price !== null && litresAfterBuy > 0 ? ((tank.cost + (litres ?? 0) * (price ?? 0)) / litresAfterBuy) : blendedPrice(tank)}
+          blendedPrice={newBlended}
         />
       </View>
 
       {overfill && (
-        <View style={{ marginBottom: space.md }}>
+        <View className="mb-4">
           <Warning>
-            Le réservoir contient {capacity} L et il y en a déjà {litresBefore.toFixed(1).replace('.', ',')} L.
-            Tu ne peux ajouter que {maxFillableL(tank).toFixed(1).replace('.', ',')} L. Vérifie la quantité.
+            Le réservoir contient {capacity} L et il y en a déjà {fr(litresBefore)} L. Tu ne peux
+            ajouter que {fr(maxFillableL(tank))} L. Vérifie la quantité.
           </Warning>
         </View>
       )}
@@ -193,36 +191,8 @@ export default function FuelNew() {
 }
 
 function parseNumber(text: string): number | null {
-  const cleaned = text.replace(/[,\s]/g, '');
+  const cleaned = text.replace(/\s/g, '').replace(',', '.');
   if (cleaned.length === 0) return null;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 }
-
-const makeStyles = (colors: Colors) =>
-  StyleSheet.create({
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-    ...font.body,
-    color: colors.text,
-  },
-  levels: { flexDirection: 'row', gap: space.sm },
-  levelButton: {
-    flex: 1,
-    paddingVertical: space.md,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  levelButtonActive: { backgroundColor: colors.accentDim, borderColor: colors.accent },
-  levelText: { ...font.tiny, color: colors.textMuted },
-  levelTextActive: { color: colors.text, fontFamily: FONT_FAMILY.bold },
-  gaugeWrap: { marginBottom: space.lg },
-  });

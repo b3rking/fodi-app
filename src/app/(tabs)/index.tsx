@@ -1,35 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
-import type { Colors } from '../../core/theme';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Settings as SettingsIcon } from 'lucide-react-native';
 import { useAppStore } from '../../store/useAppStore';
-import { ActionButton, Card, Divider, Label, Row, Stat } from '../../ui/components';
+import { ActionButton, Card, Divider, Label, Row, Stat, TAB_ICONS } from '../../ui/components';
 import { MarginGauge, TankGauge } from '../../ui/gauge';
-import { font, radius, space, FONT_FAMILY, TAB_BAR_CLEARANCE } from '../../ui/tokens';
-import { verdictLabel } from '../../core/fuel/breakeven';
 import { SettingsSheet } from '../../ui/settings-sheet';
+import { useTheme } from '../../ui/ThemeProvider';
+import { darkColors, lightColors, verdictColors } from '../../core/theme';
+import { verdictLabel } from '../../core/fuel/breakeven';
 import { fbu, kmPerLitre, litres, pct } from '../../core/format';
 import { kmLeftInTank, unrecoveredFuelMoney, blendedPrice, isAtReserve } from '../../core/fuel/engine';
-import { relativeDays } from '../../core/format';
 
 /**
- * Today: three questions, three seconds.
+ * Aujourd'hui : trois questions, trois secondes.
  *
- *   1. Did I make money?
- *   2. Am I running without making money?
- *   3. How much of my money is in the tank?
+ *   1. Ai-je gagné de l'argent aujourd'hui ?
+ *   2. Est-ce que je perds de l'argent sur le carburant ?
+ *   3. Combien de mon argent est dans le réservoir ?
  *
- * Everything below the three big buttons is secondary. If this screen ever
- * grows a seventh thing to read, it has stopped doing its job.
+ * Tout ce qui est sous les trois gros boutons est secondaire. Si cet écran
+ * devait avoir une septième chose à lire, il aurait cessé de faire son travail.
  */
 export default function TodayScreen() {
-  const { colors, verdict } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { scheme } = useTheme();
   const { ready, today, perKm, tank, efficiency, breakEven, breakEvenText, warnings, error } =
     useAppStore();
   const recompute = useAppStore((s) => s.recompute);
@@ -48,72 +45,78 @@ export default function TodayScreen() {
 
   if (error) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorTitle}>Impossible d’ouvrir la base de données</Text>
-        <Text style={styles.errorBody}>{error}</Text>
+      <View className="flex-1 items-center justify-center bg-bg px-6">
+        <Text className="mb-2 text-title font-bold text-bad">Impossible d’ouvrir la base de données</Text>
+        <Text className="text-center text-body text-ink-muted">{error}</Text>
       </View>
     );
   }
 
-  const verdictStyle = verdict[breakEven.verdict];
+  const p = scheme === 'dark' ? darkColors : lightColors;
+  const verdict = verdictColors(p)[breakEven.verdict];
   const tankValue = unrecoveredFuelMoney(tank);
   const kmLeft = kmLeftInTank(tank, efficiency);
   const atReserve = isAtReserve(tank);
 
   return (
     <ScrollView
-      style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md, paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.textMuted} />}
+      className="flex-1 bg-bg"
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 110 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={p.textMuted} />}
     >
-      <View style={styles.header}>
-        <Text style={styles.date}>{todayLabel()}</Text>
-        <View style={styles.headerRight}>
-          <Text style={styles.tankChip}>Réservoir {litres(tank.litres)}</Text>
+      {/* En-tête */}
+      <View className="mb-3 flex-row items-center justify-between">
+        <Text className="text-title font-bold text-ink">{dateDuJour()}</Text>
+        <View className="flex-row items-center gap-2">
+          <View className="rounded-chip border border-line bg-surface-alt px-3 py-1">
+            <Text className="text-small text-ink-muted">Réservoir {litres(tank.litres)}</Text>
+          </View>
           <Pressable
             onPress={() => setSettingsOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Réglages"
-            style={styles.gear}
+            className="h-9 w-9 items-center justify-center rounded-full border border-line bg-surface-alt active:opacity-70"
           >
-            <Text style={styles.gearGlyph}>⚙</Text>
+            <SettingsIcon size={17} color={p.textMuted} />
           </Pressable>
         </View>
       </View>
 
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      {/* 1. Ai-je gagné de l'argent aujourd'hui ? */}
-      <Card style={styles.heroCard}>
-        <Label>BÉNÉFICE DU JOUR</Label>
+      {/* 1. Ai-je gagné de l'argent ? */}
+      <Card className="mb-3 gap-1">
+        <Label>Bénéfice du jour</Label>
         <Text
-          style={[styles.hero, { color: today.profit >= 0 ? colors.text : colors.bad }]}
+          className={`py-1 text-[44px] font-bold tracking-tight ${today.profit >= 0 ? 'text-ink' : 'text-bad'}`}
           adjustsFontSizeToFit
           numberOfLines={1}
         >
           {fbu(today.profit)}
         </Text>
-        <Text style={styles.heroBreakdown} numberOfLines={2}>
+        <Text className="text-small text-ink-muted" numberOfLines={2}>
           Recettes {fbu(today.fares)} − Carburant {fbu(today.fuelCost)} − Autres {fbu(today.otherCosts)}
         </Text>
         <Divider />
         <Row
-          label="Dans ta poche aujourd'hui"
+          label="Dans ta poche aujourd’hui"
           value={fbu(today.cashInHand)}
-          color={today.cashInHand >= 0 ? colors.text : colors.bad}
+          tone={today.cashInHand >= 0 ? 'default' : 'bad'}
         />
-        <Text style={styles.note}>
+        <Text className="mt-1 text-[11px] leading-4 text-ink-faint">
           {today.fuelBoughtToday > 0
             ? 'Le carburant acheté aujourd’hui sort de ta poche maintenant, pas le jour où tu le consomes.'
             : 'L’argent en poche n’est pas le bénéfice : le carburant brûlé a été payé un autre jour.'}
         </Text>
       </Card>
 
-      {/* 2. Am I running without making money? */}
-      <Card style={[styles.verdictCard, { borderColor: verdictStyle.fg }]}>
-        <View style={[styles.verdictChip, { backgroundColor: verdictStyle.bg }]}>
-          <View style={[styles.dot, { backgroundColor: verdictStyle.fg }]} />
-          <Text style={[styles.verdictLabel, { color: verdictStyle.fg }]}>
+      {/* 2. Est-ce que je perds de l'argent ? */}
+      <Card className="mb-3 gap-3">
+        <View
+          className="self-start rounded-chip px-3 py-1"
+          style={{ backgroundColor: verdict.bg }}
+        >
+          <Text className="text-small font-bold tracking-wide" style={{ color: verdict.fg }}>
             {verdictLabel(breakEven.verdict)}
           </Text>
         </View>
@@ -121,18 +124,15 @@ export default function TodayScreen() {
         {breakEven.verdict !== 'not_enough_data' && (
           <>
             <MarginGauge breakEven={breakEven.trueBreakEvenKmPerL} actual={breakEven.actualKmPerL} />
-            <Text style={styles.reason}>{breakEvenText}</Text>
-            <View style={styles.marginRow}>
-              <Text style={styles.marginCaption}>Argent gagné</Text>
-              <Text style={styles.marginValue}>{fbu(perKm.revenue)}</Text>
-              <Text style={styles.marginCaption}>Argent dépensé</Text>
-              <Text style={styles.marginValue}>{fbu(perKm.costPerKm)}</Text>
-              <Text style={styles.marginCaption}>Bénéfice par km</Text>
+            <Text className="text-body leading-[22px] text-ink">{breakEvenText}</Text>
+            <View className="flex-row flex-wrap items-baseline gap-x-3 gap-y-1">
+              <Text className="text-[11px] text-ink-faint">Argent gagné</Text>
+              <Text className="mr-2 text-small font-bold text-ink">{fbu(perKm.revenue)}</Text>
+              <Text className="text-[11px] text-ink-faint">Argent dépensé</Text>
+              <Text className="mr-2 text-small font-bold text-ink">{fbu(perKm.costPerKm)}</Text>
+              <Text className="text-[11px] text-ink-faint">Bénéfice par km</Text>
               <Text
-                style={[
-                  styles.marginValue,
-                  { color: perKm.profitPerKm >= 0 ? colors.good : colors.bad },
-                ]}
+                className={`text-small font-bold ${perKm.profitPerKm >= 0 ? 'text-good' : 'text-bad'}`}
               >
                 {fbu(perKm.profitPerKm)}
               </Text>
@@ -142,9 +142,9 @@ export default function TodayScreen() {
       </Card>
 
       {/* 3. Combien de mon argent est dans le réservoir ? */}
-      <Card>
-        <Label>TON RÉSERVOIR</Label>
-        <View style={styles.gaugeWrap}>
+      <Card className="mb-3">
+        <Label>Ton réservoir</Label>
+        <View className="my-3">
           <TankGauge
             litres={tank.litres}
             capacityL={tank.capacityL}
@@ -158,15 +158,15 @@ export default function TodayScreen() {
         />
         <Row label="Argent du carburant dans le réservoir" value={fbu(tankValue)} />
         {tankValue > 0 && (
-          <View style={styles.warnBox}>
-            <Text style={styles.warnText}>
+          <View className="mt-2 rounded-control bg-warn-dim px-3 py-2.5">
+            <Text className="text-small leading-5 text-warn">
               {fbu(tankValue)} de ton argent sont en carburant dans le réservoir.
             </Text>
           </View>
         )}
         {atReserve && tank.litres > 0 && (
-          <View style={[styles.warnBox, { backgroundColor: colors.badDim }]}>
-            <Text style={[styles.warnText, { color: colors.bad }]}>
+          <View className="mt-2 rounded-control bg-bad-dim px-3 py-2.5">
+            <Text className="text-small leading-5 text-bad">
               Niveau de réserve. Il est temps de faire le plein.
             </Text>
           </View>
@@ -174,27 +174,30 @@ export default function TodayScreen() {
       </Card>
 
       {warnings.length > 0 && (
-        <Card style={styles.warnCard}>
+        <Card className="mb-3 border-warn bg-warn-dim">
           {warnings.map((w) => (
-            <Text key={w} style={styles.warnText}>
+            <Text key={w} className="text-small leading-5 text-warn">
               {w}
             </Text>
           ))}
         </Card>
       )}
 
-      {/* Les trois gestes qu'il fait toute la journée. */}
-      <View style={styles.actions}>
-        <ActionButton label="TRAJET" icon="＋" onPress={() => router.push('/trip/new')} tone="primary" />
-        <ActionButton label="PLEIN" icon="⛽" onPress={() => router.push('/fuel/new')} />
-        <ActionButton label="DÉPENSE" icon="−" onPress={() => router.push('/cost/new')} />
+      {/* Les trois gestes de la journée */}
+      <View className="mb-3 flex-row gap-2">
+        <ActionButton label="TRAJET" icon={TAB_ICONS.trips} onPress={() => router.push('/trip/new')} tone="primary" />
+        <ActionButton label="PLEIN" icon={TAB_ICONS.fuel} onPress={() => router.push('/fuel/new')} />
+        <ActionButton label="DÉPENSE" icon={TAB_ICONS.money} onPress={() => router.push('/cost/new')} />
       </View>
 
       <Card>
-        <View style={styles.statRow}>
+        <View className="flex-row">
           <Stat label="kilomètres" value={`${Math.round(today.km)}`} />
           <Stat label="trajets" value={`${today.tripCount}`} />
-          <Stat label="carburant brûlé" value={litres(today.fuelCost / Math.max(1, blendedPrice(tank) ?? 3800))} />
+          <Stat
+            label="carburant brûlé"
+            value={litres(today.fuelCost / Math.max(1, blendedPrice(tank) ?? 3800))}
+          />
           <Stat label="gagné par km" value={fbu(perKm.revenuePerKm)} />
         </View>
         <Divider />
@@ -202,81 +205,17 @@ export default function TodayScreen() {
         <Row
           label="Marge de bénéfice"
           value={pct(perKm.profitMarginPct)}
-          color={perKm.profitMarginPct >= 15 ? colors.good : perKm.profitMarginPct >= 0 ? colors.warn : colors.bad}
+          tone={perKm.profitMarginPct >= 15 ? 'good' : perKm.profitMarginPct >= 0 ? 'default' : 'bad'}
         />
       </Card>
     </ScrollView>
   );
 }
 
-function todayLabel(): string {
+function dateDuJour(): string {
   return new Date().toLocaleDateString('fr-FR', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
   });
 }
-
-const makeStyles = (colors: Colors) =>
-  StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingHorizontal: space.lg, gap: space.md },
-  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.xl },
-  errorTitle: { ...font.title, color: colors.bad, marginBottom: space.sm },
-  errorBody: { ...font.body, color: colors.textMuted, textAlign: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  gear: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  gearGlyph: { fontSize: 17, color: colors.textMuted },
-  date: { ...font.title, color: colors.text },
-  tankChip: {
-    ...font.small,
-    color: colors.textMuted,
-    backgroundColor: colors.surfaceAlt,
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  heroCard: { gap: space.xs },
-  hero: { ...font.hero, marginVertical: space.xs },
-  heroBreakdown: { ...font.small, color: colors.textMuted },
-  note: { ...font.tiny, color: colors.textFaint, marginTop: space.xs },
-  verdictCard: { gap: space.md },
-  verdictChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.pill,
-    gap: space.sm,
-  },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  verdictLabel: { ...font.small, fontFamily: FONT_FAMILY.bold, letterSpacing: 0.5 },
-  reason: { ...font.body, color: colors.text, lineHeight: 22 },
-  marginRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, alignItems: 'baseline' },
-  marginCaption: { ...font.tiny, color: colors.textFaint },
-  marginValue: { ...font.small, color: colors.text, fontFamily: FONT_FAMILY.bold, marginRight: space.md },
-  gaugeWrap: { marginVertical: space.md },
-  warnBox: {
-    backgroundColor: colors.warnDim,
-    borderRadius: radius.sm,
-    padding: space.md,
-    marginTop: space.sm,
-  },
-  warnCard: { backgroundColor: colors.warnDim, borderColor: colors.warn },
-  warnText: { ...font.small, color: colors.warn, lineHeight: 20 },
-  actions: { flexDirection: 'row', gap: space.sm },
-  statRow: { flexDirection: 'row' },
-  });
