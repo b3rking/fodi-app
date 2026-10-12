@@ -44,7 +44,11 @@ yarn-error.*
 dist-check/
 coverage/
 # expo generated typed routes
+<<<<<<< HEAD
 .expo/
 # nativewind
 dist-nw/
 dist-final/
+=======
+.expo/
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db

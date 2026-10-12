@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "expo": "~57.0.26",
+<<<<<<< HEAD
     "expo-crypto": "~57.0.3",
     "expo-document-picker": "~57.0.3",
     "expo-file-system": "~57.0.7",
@@ -30,16 +31,34 @@
     "lucide-react-native": "^1.52.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+=======
+    "expo-router": "~57.0.24",
+    "expo-sqlite": "~57.0.3",
+    "expo-secure-store": "~57.0.4",
+    "expo-file-system": "~57.0.7",
+    "expo-sharing": "~57.0.22",
+    "expo-haptics": "~57.0.3",
+    "expo-screen-capture": "~57.0.3",
+    "expo-document-picker": "~57.0.3",
+    "expo-crypto": "~57.0.3",
+    "expo-linking": "~57.0.11",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
+<<<<<<< HEAD
     "react-native-web": "~0.21.0",
+=======
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
     "@vitest/coverage-v8": "^3.2.4",
+<<<<<<< HEAD
     "babel-preset-expo": "^57.0.13",
     "nativewind": "^4.2.7",
     "tailwindcss": "^3.4.19",
@@ -47,3 +66,9 @@
     "vitest": "^3.2.4"
   }
 }
+=======
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.4"
+  }
+}
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db

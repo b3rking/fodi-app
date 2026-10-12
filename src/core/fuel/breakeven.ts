@@ -155,11 +155,19 @@ function verdictFor(perKm: PerKm, hasData: boolean): Verdict {
  */
 export function explainBreakEven(be: BreakEven, perKm: PerKm): string {
   if (be.verdict === 'not_enough_data') {
+<<<<<<< HEAD
     return 'Note quelques trajets et nous calculerons ton km/L automatiquement.';
   }
 
   if (!be.breakEvenExists) {
     return 'Tes autres dépenses dépassent déjà tes recettes. Même le carburant gratuit ne te sauvera pas.';
+=======
+    return 'Log a few trips and we will work out your km/L automatically.';
+  }
+
+  if (!be.breakEvenExists) {
+    return 'Your other costs already exceed your income. Even free fuel will not save you.';
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   }
 
   const fmt = (n: number | null, dp = 1) => (n === null ? '—' : n.toFixed(dp));
@@ -167,10 +175,17 @@ export function explainBreakEven(be: BreakEven, perKm: PerKm): string {
   const have = be.actualKmPerL;
   const margin = be.efficiencyMarginPct;
 
+<<<<<<< HEAD
   // Sans conoscance du rendement, on peut donner la cible mais pas l'ecart :
   // ne dire que ce qui est vrai.
   if (have === null) {
     return `Il te faut ${fmt(need)} km/L pour être rentable. Nous calculerons ton chiffre après un plein.`;
+=======
+  // Without a known economy we can still state the break-even target, but not
+  // say how far he is from it. Say only what is true.
+  if (have === null) {
+    return `You need ${fmt(need)} km/L to stay profitable. We will work out your own figure after a full tank.`;
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   }
 
   if (be.verdict === 'losing_money') {
@@ -178,21 +193,34 @@ export function explainBreakEven(be: BreakEven, perKm: PerKm): string {
     const shortfall = be.efficiencyMarginKmPerL === null ? null : Math.abs(be.efficiencyMarginKmPerL);
     const fareFix = Math.abs(perKm.profitPerKm);
     return (
+<<<<<<< HEAD
       `Il te faut ${fmt(need)} km/L pour être rentable. Tu es à ${fmt(have)} km/L — ` +
       `il te manque ${fmt(shortfall)} km/L. ` +
       `Tu perds ${Math.round(fareFix)} FBu à chaque kilomètre, soit environ ${fbu(perTen)} tous les 10 km. ` +
       `Deux solutions : rouler ${fmt(shortfall)} km/L de mieux, ou demander ${Math.round(fareFix)} FBu de plus par km.`
+=======
+      `You need ${fmt(need)} km/L to stay profitable. You are ${fmt(have)} km/L — ` +
+      `${fmt(shortfall)} km/L short. That is ${Math.round(fareFix)} FBu lost on every kilometre, ` +
+      `about ${fbu(perTen)} for every 10 km you drive. ` +
+      `Two ways out: drive ${fmt(shortfall)} km/L better, or charge ${Math.round(fareFix)} FBu more per km.`
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     );
   }
 
   if (be.verdict === 'breaking_even') {
     return (
+<<<<<<< HEAD
       `Il te faut ${fmt(need)} km/L et tu es à ${fmt(have)} km/L en moyenne. ` +
       `Tu gagnes de l'argent, mais tu n'as aucune marge pour une mauvaise journée.`
+=======
+      `You need ${fmt(need)} km/L and you are averaging ${fmt(have)} km/L. ` +
+      `You are making money, but there is no room for a bad day.`
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     );
   }
 
   return (
+<<<<<<< HEAD
     `Il te faut ${fmt(need)} km/L et tu es à ${fmt(have)} km/L en moyenne. ` +
     `Ton moteur peut perdre ${fmt(margin, 0)}% de rendement avant que tu ne commences à perdre de l'argent.`
   );
@@ -209,6 +237,24 @@ export function verdictLabel(v: Verdict): string {
       return 'TU PERDS';
     default:
       return 'PAS ASSEZ DE DONNÉES';
+=======
+    `You need ${fmt(need)} km/L and you are averaging ${fmt(have)} km/L. ` +
+    `Your engine can get ${fmt(margin, 0)}% worse before you lose money.`
+  );
+}
+
+/** One short line for the Today screen. */
+export function verdictLabel(v: Verdict): string {
+  switch (v) {
+    case 'making_money':
+      return 'MAKING MONEY';
+    case 'breaking_even':
+      return 'JUST BREAKING EVEN';
+    case 'losing_money':
+      return 'LOSING MONEY';
+    default:
+      return 'NOT ENOUGH DATA';
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   }
 }
 

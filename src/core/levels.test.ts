@@ -22,11 +22,19 @@ describe('FILL_LEVELS', () => {
 
 describe('levelLabel', () => {
   it('uses words for the ends and fractions in the middle', () => {
+<<<<<<< HEAD
     expect(levelLabel('empty')).toBe('Vide');
     expect(levelLabel('quarter')).toBe('¼');
     expect(levelLabel('half')).toBe('½');
     expect(levelLabel('three_quarter')).toBe('¾');
     expect(levelLabel('full')).toBe('Plein');
+=======
+    expect(levelLabel('empty')).toBe('Empty');
+    expect(levelLabel('quarter')).toBe('¼');
+    expect(levelLabel('half')).toBe('½');
+    expect(levelLabel('three_quarter')).toBe('¾');
+    expect(levelLabel('full')).toBe('Full');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   });
 
   it('has a label for every preset', () => {
@@ -36,6 +44,12 @@ describe('levelLabel', () => {
   });
 
   it('gives the full tank the most obvious label, since it is the common case', () => {
+<<<<<<< HEAD
     expect(levelLabel('full')).toBe('Plein');
   });
 });
+=======
+    expect(levelLabel('full')).toBe('Full');
+  });
+});
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db

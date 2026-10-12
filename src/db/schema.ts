@@ -132,6 +132,7 @@ export async function migrate(db: SQLiteDatabase): Promise<void> {
   }
 }
 
+<<<<<<< HEAD
 /** Catégories de dépenses, choisies pour le métier de taxi, pas pour la compta. */
 export const COST_CATEGORIES = [
   'Entretien et réparations',
@@ -156,6 +157,32 @@ export const INCOME_CATEGORIES = [
   'Prime',
   'Lavage et detailing',
   'Autre',
+=======
+/** Categories seeded for real taxi work, not generic bookkeeping. */
+export const COST_CATEGORIES = [
+  'Maintenance & repairs',
+  'Tyres',
+  'Oil & servicing',
+  'Insurance',
+  'Road tax & levies',
+  'Government levy',
+  'Data / airtime',
+  'Car wash',
+  'Tolls & parking',
+  'Fines',
+  'Union dues',
+  'Other',
+] as const;
+
+export const INCOME_CATEGORIES = [
+  'Passenger fare',
+  'Delivery / courier',
+  'Car hire',
+  'Tips',
+  'Bonus',
+  'Wash & detailing',
+  'Other',
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 ] as const;
 
 export const DEFAULT_SETTINGS = {

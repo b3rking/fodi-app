@@ -123,6 +123,7 @@ export function computeCycle(input: CycleInput): CycleProgress {
 /** The sentence under the cycle card. */
 export function explainCycle(c: CycleProgress): string {
   if (!c.startedBy) {
+<<<<<<< HEAD
     return 'Fais un plein une fois et cette page suivra ce que ce carburant te rapporte.';
   }
   if (c.recoveryPct >= 100) {
@@ -130,15 +131,32 @@ export function explainCycle(c: CycleProgress): string {
     return (
       `Tu as déjà récupéré ${times} fois le prix du carburant, et il reste encore ` +
       `${fbu(c.stillUnburnedValue)} dans le réservoir.`
+=======
+    return 'Fill the tank to full once and this will start tracking what that fuel earns back.';
+  }
+  if (c.recoveryPct >= 100) {
+    const times = (c.recoveryPct / 100).toFixed(1);
+    return (
+      `You have made back the fuel ${times} times over, and ${fbu(c.stillUnburnedValue)} ` +
+      `is still sitting in the tank.`
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     );
   }
   if (c.revenue > 0) {
     return (
+<<<<<<< HEAD
       `Tu as récupéré ${Math.round(c.recoveryPct)} % du prix de ce carburant. Il te manque encore ` +
       `${fbu(c.shortfallToBreakEven)} de recettes avant que ce plein soit rentré.`
     );
   }
   return 'Note des trajets pour voir si le carburant est bien rentré.';
+=======
+      `You have made back ${Math.round(c.recoveryPct)}% of this fuel. About ${fbu(c.shortfallToBreakEven)} ` +
+      `of fare still needed before this tank has paid for itself.`
+    );
+  }
+  return 'Log trips in this tank to see whether the fuel money comes back.';
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 }
 
 /**

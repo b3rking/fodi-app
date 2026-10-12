@@ -12,6 +12,7 @@ The full design and build plan is in [`PLAN.md`](./PLAN.md).
 
 ---
 
+<<<<<<< HEAD
 ## Typographie
 
 **Product Sans** (400 / 500 / 700), embarquée localement dans `assets/fonts/`.
@@ -39,6 +40,9 @@ de milliers en français, donc `22,5 L` ne peut pas être confondu avec `225 L` 
 important pour le carburant.
 
 ## Code PIN par défaut
+=======
+## Default PIN
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 
 **5832**
 
@@ -115,25 +119,38 @@ phones with `adb install -r <apk>`.
 src/
   app/                  expo-router: 5 tabs + one first-run route
     (tabs)/
+<<<<<<< HEAD
       index.tsx         AUJOURD'HUI — the three questions
       trips.tsx         TRAJETS    — A→B log
       fuel.tsx          CARBURANT  — tank gauge, break-even, tank cycle
       money.tsx         ARGENT     — other costs and extra income
       reports.tsx       RAPPORTS   — week/month/year P&L
     trip|fuel|cost/new  entry sheets (bottom sheets, never new screens)
+=======
+      index.tsx         TODAY   — the three questions
+      trips.tsx         TRIPS   — A→B log
+      fuel.tsx          FUEL    — tank gauge, break-even, tank cycle
+      money.tsx         MONEY   — other costs and extra income
+      reports.tsx       REPORTS — week/month/year P&L
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   core/                 ← pure. No React, no SQLite, no Expo runtime.
     fuel/
       engine.ts         FIFO layers, refill/consume, blend
       breakeven.ts      per-km, break-even km/L, margins, verdict + copy
       cycle.ts          tank-cycle recovery
       allocate.ts       split burned fuel across trips by km
+<<<<<<< HEAD
     format.ts           FBu, km, L — French conventions
+=======
+    format.ts           FBu, km, L — grouped the French/Burundian way
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     theme.ts            dark/light palettes and the system-follow rule
     levels.ts           the five tank-level buttons
     backup.ts           mirroring, share sheet, restore
     lock.ts             the PIN
   db/                   schema, queries, tank rebuild
   store/                zustand + one recompute
+<<<<<<< HEAD
   ui/                   components, gauges, sheets, ThemeProvider, fonts
 
 tailwind.config.js      both palettes, Product Sans, spacing scale
@@ -146,16 +163,28 @@ babel.config.js         jsxImportSource: nativewind
 French copy and the fuel engine are untouched by the styling layer — `src/core`
 has no Tailwind import and stays independently testable.
 
+=======
+  ui/                   tokens, components, gauges, ThemeProvider, sheets
+```
+
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 **The architecture rule:** all money and fuel logic is pure functions in
 `src/core` with zero React and zero SQLite imports. The UI only renders their
 output. That is what makes the risky part testable.
 
+<<<<<<< HEAD
 **Theming:** two layers. NativeWind handles class styling (`bg-surface`,
 `text-ink`, `border-line`) and compiles both palettes via `dark:` variants; the
 scheme is driven by `useColorScheme.set()` from the ThemeProvider, so it follows
 the driver's choice rather than only the OS. `useTheme()` is still used where a
 value has to be computed in JS — SVG fills and Lucide icon tints, neither of
 which understands `className`.
+=======
+**Theming:** `tokens.ts` holds only typography, spacing and radii. Colour comes
+from `useTheme()`. Each screen builds its stylesheet through `makeStyles(colors)`
+and `useThemedStyles`, so switching theme rebuilds the styles instead of leaving
+them stale.
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 
 ---
 

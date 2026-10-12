@@ -1,6 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+<<<<<<< HEAD
 import { useColorScheme as useSystemColorScheme } from 'react-native';
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
+=======
+import { useColorScheme } from 'react-native';
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 import {
   isThemeMode,
   palettes,
@@ -31,8 +35,12 @@ const ThemeContext = createContext<ThemeValue | null>(null);
  * because there is no account and no server to sync with.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+<<<<<<< HEAD
   const system = useSystemColorScheme();
   const { setColorScheme } = useNativeWindColorScheme();
+=======
+  const system = useColorScheme();
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   const db = useAppStore((s) => s.db);
   const [mode, setModeState] = useState<ThemeMode>('system');
 
@@ -49,6 +57,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [db]);
 
+<<<<<<< HEAD
   const scheme = resolveScheme(mode, system);
 
   // Tell NativeWind which palette the `dark:` variants should compile against.
@@ -58,6 +67,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setColorScheme(scheme);
   }, [scheme, setColorScheme]);
 
+=======
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   const setMode = useCallback(
     (next: ThemeMode) => {
       setModeState(next);
@@ -67,6 +78,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+<<<<<<< HEAD
+=======
+  const scheme = resolveScheme(mode, system);
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   const colors = palettes[scheme];
 
   const value = useMemo<ThemeValue>(
@@ -85,3 +100,17 @@ export function useTheme(): ThemeValue {
   return ctx;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Build a StyleSheet for the active palette, rebuilt only when the theme
+ * changes.
+ *
+ * `factory` must be a module-scope function (not an inline arrow) so its
+ * identity is stable and the memo actually holds.
+ */
+export function useThemedStyles<T>(factory: (colors: Colors) => T): T {
+  const { colors } = useTheme();
+  return useMemo(() => factory(colors), [colors, factory]);
+}
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db

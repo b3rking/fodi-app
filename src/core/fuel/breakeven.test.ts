@@ -9,8 +9,13 @@ import {
 import { consume, emptyTank, refill } from './engine';
 
 const CAP = 60;
+<<<<<<< HEAD
 /** Doit correspondre a format.ts : espace insecable U+00A0. */
 const NBSP = ' ';
+=======
+/** The formatter groups digits with U+202F, not a plain space. */
+const NBSP = '\u202F';
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 
 /** The tank from the plan: 45 L at 3 800, then 22.5 L burned → 22.5 L left. */
 function tankAt3800() {
@@ -117,7 +122,11 @@ describe('computeBreakEven', () => {
     const be = computeBreakEven({ perKm, tank: tankAt3800(), actualKmPerL: 10, tripCount: 10 });
     expect(be.breakEvenExists).toBe(false);
     expect(be.trueBreakEvenKmPerL).toBeNull();
+<<<<<<< HEAD
     expect(explainBreakEven(be, perKm)).toContain('Même le carburant gratuit ne te sauvera pas');
+=======
+    expect(explainBreakEven(be, perKm)).toContain('Even free fuel will not save you');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   });
 
   it('refuses a verdict on too little data', () => {
@@ -128,7 +137,11 @@ describe('computeBreakEven', () => {
       tripCount: 1,
     });
     expect(be.verdict).toBe('not_enough_data');
+<<<<<<< HEAD
     expect(verdictLabel(be.verdict)).toBe('PAS ASSEZ DE DONNÉES');
+=======
+    expect(verdictLabel(be.verdict)).toBe('NOT ENOUGH DATA');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   });
 
   it('gives no margin when the economy is unknown, but still a verdict', () => {
@@ -171,9 +184,15 @@ describe('explainBreakEven', () => {
     const perKm = totalsToPerKm({ km: 100, fares: 46800, otherIncome: 0, fuelCost: 61300, otherCosts: 0 });
     const be = computeBreakEven({ perKm, tank: tankAt3800(), actualKmPerL: 7.5, tripCount: 10 });
     const text = explainBreakEven(be, perKm);
+<<<<<<< HEAD
     expect(text).toContain('il te manque');
     expect(text).toContain(`1${NBSP}450${NBSP}FBu`);   // 145 par km x 10
     expect(text).toContain('Deux solutions');
+=======
+    expect(text).toContain('km/L short');
+    expect(text).toContain(`1${NBSP}450${NBSP}FBu`);   // 145 per km x 10
+    expect(text).toContain('Two ways out');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     // Amounts use the space grouping, not a comma.
     expect(text).not.toMatch(/\d,\d{3}/);
   });
@@ -181,7 +200,11 @@ describe('explainBreakEven', () => {
   it('says the safety net when making money', () => {
     const perKm = totalsToPerKm(SEPTEMBER);
     const be = computeBreakEven({ perKm, tank: tankAt3800(), actualKmPerL: 10.8, tripCount: 240 });
+<<<<<<< HEAD
     expect(explainBreakEven(be, perKm)).toContain('22% de rendement');
+=======
+    expect(explainBreakEven(be, perKm)).toContain('22% worse');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   });
 
   it('produces a sentence with no NaN, ever', () => {

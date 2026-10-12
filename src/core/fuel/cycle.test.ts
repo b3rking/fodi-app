@@ -3,8 +3,13 @@ import { computeCycle, explainCycle } from './cycle';
 import { consume, emptyTank, refill } from './engine';
 
 const CAP = 60;
+<<<<<<< HEAD
 /** Doit correspondre a format.ts : espace insecable U+00A0. */
 const NBSP = ' ';
+=======
+/** The formatter groups digits with U+202F, not a plain space. */
+const NBSP = '\u202F';
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 
 const FILL_12 = {
   id: 'fill-12',
@@ -103,7 +108,11 @@ describe('computeCycle', () => {
     expect(c.startedBy).toBeNull();
     expect(c.km).toBe(0);
     expect(c.kmPerLitre).toBeNull();
+<<<<<<< HEAD
     expect(explainCycle(c)).toContain('Fais un plein');
+=======
+    expect(explainCycle(c)).toContain('Fill the tank to full');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   });
 
   it('never divides by zero with no trips and no km', () => {
@@ -124,7 +133,11 @@ describe('computeCycle', () => {
 describe('explainCycle', () => {
   it('celebrates recovery past 100% with the fuel still in the tank', () => {
     const text = explainCycle(cycle12());
+<<<<<<< HEAD
     expect(text).toContain('1,3 fois');
+=======
+    expect(text).toContain('1.3 times over');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     expect(text).toContain(`85${NBSP}500${NBSP}FBu`); // still unburned value
   });
 
@@ -137,7 +150,12 @@ describe('explainCycle', () => {
       faresEarned: 40000,
       otherIncomeEarned: 0,
     });
+<<<<<<< HEAD
     expect(explainCycle(c)).toContain('47 %');
     expect(explainCycle(c)).toContain('Il te manque encore');
+=======
+    expect(explainCycle(c)).toContain('47%');
+    expect(explainCycle(c)).toContain('still needed');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   });
 });

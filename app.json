@@ -19,8 +19,12 @@
     "plugins": [
       "expo-router",
       "expo-sqlite",
+<<<<<<< HEAD
       "expo-secure-store",
       "expo-font"
+=======
+      "expo-secure-store"
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
     ],
     "experiments": {
       "typedRoutes": true

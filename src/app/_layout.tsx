@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+<<<<<<< HEAD
 import * as SystemUI from 'expo-system-ui';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
@@ -22,19 +23,44 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <ThemedApp />
+=======
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
+import { ThemeProvider, useTheme } from '../ui/ThemeProvider';
+import { useAppStore } from '../store/useAppStore';
+
+export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <StatusBarAdapter />
+        <StackHost />
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
       </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
+<<<<<<< HEAD
 function ThemedApp() {
   const { colors, scheme } = useTheme();
+=======
+function StatusBarAdapter() {
+  const { scheme } = useTheme();
+  // Follow the theme so the bar is not white-on-white in light mode.
+  return <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />;
+}
+
+function StackHost() {
+  const { colors } = useTheme();
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   const init = useAppStore((s) => s.init);
 
   useEffect(() => {
     void init();
   }, [init]);
 
+<<<<<<< HEAD
   // Android est en edge-to-edge : la barre d'état et la barre de gestes sont
   // transparentes et laissent voir le fond de la fenêtre. Sans ceci, le haut
   // de l'écran reste noir en mode clair et les icônes sombres deviennent
@@ -62,3 +88,19 @@ function ThemedApp() {
     </View>
   );
 }
+=======
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.text,
+        headerTitleStyle: { fontWeight: '700' },
+        contentStyle: { backgroundColor: colors.bg },
+      }}
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="first-run" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db

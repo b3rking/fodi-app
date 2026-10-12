@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+<<<<<<< HEAD
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ColorValue } from 'react-native';
 import { useTheme } from '../../ui/ThemeProvider';
@@ -28,6 +29,22 @@ export default function TabsLayout() {
       const tint = typeof color === 'string' ? color : colors.text;
       return <Icon size={size ?? 22} color={tint} strokeWidth={2} />;
     };
+=======
+import { useTheme, useThemedStyles } from '../../ui/ThemeProvider';
+import type { Colors } from '../../core/theme';
+import { StyleSheet, Text, type ColorValue } from 'react-native';
+import { font } from '../../ui/tokens';
+
+/**
+ * Five tabs. Not six.
+ *
+ * Every tab answers exactly one question. Anything that would need a sixth tab
+ * belongs in a bottom sheet instead.
+ */
+export default function TabsLayout() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 
   return (
     <Tabs
@@ -38,6 +55,7 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
+<<<<<<< HEAD
           borderTopWidth: 1,
           height: barHeight,
           paddingBottom: bottomPadding,
@@ -57,3 +75,31 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+=======
+          height: 64,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+      }}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: (p) => <Glyph glyph="◉" {...p} /> }} />
+      <Tabs.Screen name="trips" options={{ title: 'Trips', tabBarIcon: (p) => <Glyph glyph="→" {...p} /> }} />
+      <Tabs.Screen name="fuel" options={{ title: 'Fuel', tabBarIcon: (p) => <Glyph glyph="⛽" {...p} /> }} />
+      <Tabs.Screen name="money" options={{ title: 'Money', tabBarIcon: (p) => <Glyph glyph="₣" {...p} /> }} />
+      <Tabs.Screen name="reports" options={{ title: 'Reports', tabBarIcon: (p) => <Glyph glyph="▤" {...p} /> }} />
+    </Tabs>
+  );
+}
+
+function Glyph({ glyph, color, size }: { glyph: string; color: ColorValue; size?: number }) {
+  const styles = useThemedStyles(makeStyles);
+
+  return <Text style={[styles.glyph, { color, fontSize: size ?? 18 }]}>{glyph}</Text>;
+}
+
+const makeStyles = () =>
+  StyleSheet.create({
+    glyph: { ...font.body, includeFontPadding: false },
+  });
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db

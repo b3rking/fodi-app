@@ -11,8 +11,12 @@ import {
   relativeDays,
 } from './format';
 
+<<<<<<< HEAD
 /** Doit correspondre a la constante de format.ts : U+00A0, pas U+202F. */
 const NBSP = ' ';
+=======
+const NBSP = '\u202F';
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
 
 describe('fbu', () => {
   it('groups thousands the French/Burundian way', () => {
@@ -48,11 +52,19 @@ describe('fbuShort', () => {
 });
 
 describe('unit formatters', () => {
+<<<<<<< HEAD
   it('formats litres, km and km/L with a French decimal comma', () => {
     expect(litres(22.5)).toBe(`22,5${NBSP}L`);
     expect(litres(8)).toBe(`8,0${NBSP}L`);
     expect(km(4.7)).toBe(`4,7${NBSP}km`);
     expect(kmPerLitre(10.8)).toBe(`10,8${NBSP}km/L`);
+=======
+  it('formats litres, km and km/L', () => {
+    expect(litres(22.5)).toBe(`22.5${NBSP}L`);
+    expect(litres(8)).toBe(`8.0${NBSP}L`);
+    expect(km(4.7)).toBe(`4.7${NBSP}km`);
+    expect(kmPerLitre(10.8)).toBe(`10.8${NBSP}km/L`);
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   });
 
   it('shows a dash for an unknown economy, never a zero', () => {
@@ -66,6 +78,7 @@ describe('unit formatters', () => {
   it('formats per-km and per-litre prices', () => {
     expect(fbuPerKm(467.757)).toBe(`468${NBSP}FBu/km`);
     expect(fbuPerLitre(3800)).toBe(`3${NBSP}800${NBSP}FBu/L`);
+<<<<<<< HEAD
     expect(pct(21.5199)).toBe(`22${NBSP}%`);
   });
 
@@ -76,10 +89,14 @@ describe('unit formatters', () => {
     expect(formatted).not.toMatch(/\d,\d{3}/);
     expect(formatted).toContain('22,5');
     expect(formatted).toContain('10,75');
+=======
+    expect(pct(21.5199)).toBe('22%');
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
   });
 });
 
 describe('relativeDays', () => {
+<<<<<<< HEAD
   it('reads naturally in French for a driver', () => {
     expect(relativeDays(0)).toBe("aujourd'hui");
     expect(relativeDays(1)).toBe('hier');
@@ -89,3 +106,14 @@ describe('relativeDays', () => {
     expect(relativeDays(90)).toBe('il y a 3 mois');
   });
 });
+=======
+  it('reads naturally for a driver', () => {
+    expect(relativeDays(0)).toBe('today');
+    expect(relativeDays(1)).toBe('yesterday');
+    expect(relativeDays(4)).toBe('4 days ago');
+    expect(relativeDays(8)).toBe('last week');
+    expect(relativeDays(21)).toBe('3 weeks ago');
+    expect(relativeDays(90)).toBe('3 months ago');
+  });
+});
+>>>>>>> a445be3381f7094f093f3f61099952c08cf806db
