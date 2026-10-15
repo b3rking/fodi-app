@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { useFonts } from 'expo-font';
-import { StatusBar } from 'expo-status-bar';
-import { Text, View } from 'react-native';
+import { StatusBar, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
-import { Fuel } from 'lucide-react-native';
+import * as SystemUI from 'expo-system-ui';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { useThemeStore } from './store/themeStore';
+import { darkPalette, lightPalette } from './core/theme';
 import { fr } from './i18n/fr';
 
 export default function App() {
@@ -24,17 +24,24 @@ export default function App() {
     setColorScheme(mode);
   }, [mode, setColorScheme]);
 
+  const isDark = colorScheme === 'dark';
+  const palette = isDark ? darkPalette : lightPalette;
+
+  // Teinte les surfaces natives (fond de fenêtre derrière la barre de statut
+  // et la barre de navigation) avec la couleur de surface du thème.
+  // Placé avant le retour anticipé : les hooks doivent s'exécuter à chaque rendu.
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(palette.surface);
+  }, [palette.surface]);
+
   if (!fontsLoaded) {
     return null;
   }
-
-  const isDark = colorScheme === 'dark';
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-black">
       <View className="flex-1 items-center justify-center gap-6 px-6">
         <View className="items-center gap-2">
-          <Fuel size={40} color={isDark ? '#FF9800' : '#FF5722'} />
           <Text className="font-700 text-4xl text-black dark:text-white">
             {fr.appName}
           </Text>
@@ -53,7 +60,12 @@ export default function App() {
           <ThemeSwitcher />
         </View>
 
-        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <StatusBar
+          animated
+          translucent={false}
+          barStyle={isDark ? 'light-content' : 'dark-content'}
+          backgroundColor={palette.surface}
+        />
       </View>
     </SafeAreaView>
   );
