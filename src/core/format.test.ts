@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatDayFr,
   formatFBu,
+  formatKm,
   formatKmPerLitre,
   formatLitres,
   formatPricePerLitre,
@@ -41,6 +42,13 @@ describe('formatKmPerLitre', () => {
     expect(formatKmPerLitre(null)).toBe('—');
     expect(formatKmPerLitre(undefined)).toBe('—');
     expect(formatKmPerLitre(NaN)).toBe('—');
+  });
+});
+
+describe('formatKm', () => {
+  it('kilomètres avec virgule', () => {
+    expect(formatKm(42)).toBe('42,0 km');
+    expect(formatKm(4.7)).toBe('4,7 km');
   });
 });
 

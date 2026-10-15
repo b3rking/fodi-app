@@ -13,21 +13,48 @@ export interface FillRow {
   litresAfterL: number;
 }
 
+export interface TripRow {
+  id: number;
+  ts: number;
+  fromPlace: string | null;
+  toPlace: string;
+  km: number;
+  fare: number;
+  extras: number;
+  odoFromKm: number | null;
+  odoToKm: number | null;
+  fuelL: number | null;
+  note: string | null;
+}
+
+export interface NewTrip extends Omit<TripRow, 'id'> {
+  id?: number;
+}
+
 export interface NewFill extends Omit<FillRow, 'id' | 'ts'> {
   ts?: number;
 }
 
 const DEFAULT_TANK_CAP_L = 60;
 
-let db: SQLite.SQLiteDatabase | null = null;
+// Singleton sur promesse : deux inits en parallèle (carburant + trajets)
+// ne doivent jamais ouvrir la base deux fois ni créer les tables deux fois.
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
-async function getDb(): Promise<SQLite.SQLiteDatabase> {
-  if (!db) db = await SQLite.openDatabaseAsync('fodi.db');
-  return db;
+function getDb(): Promise<SQLite.SQLiteDatabase> {
+  if (!dbPromise) dbPromise = SQLite.openDatabaseAsync('fodi.db');
+  return dbPromise;
 }
 
-/** Crée les tables (pleins + réglages). Idempotent. */
-export async function initDatabase(): Promise<void> {
+let initPromise: Promise<void> | null = null;
+
+/** Crée les tables (pleins + trajets + réglages). Idempotent, thread-safe. */
+export function initDatabase(): Promise<void> {
+  if (!initPromise) initPromise = doInit();
+  return initPromise;
+}
+
+async function doInit(): Promise<void> {
   const database = await getDb();
   await database.execAsync(`
     PRAGMA journal_mode = WAL;
@@ -45,6 +72,19 @@ export async function initDatabase(): Promise<void> {
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS trips (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts INTEGER NOT NULL,
+      from_place TEXT,
+      to_place TEXT NOT NULL,
+      km REAL NOT NULL,
+      fare REAL NOT NULL,
+      extras REAL NOT NULL DEFAULT 0,
+      odo_from_km REAL,
+      odo_to_km REAL,
+      fuel_l REAL,
+      note TEXT
     );
   `);
   await database.runAsync(
@@ -184,5 +224,129 @@ export async function insertFill(fill: NewFill): Promise<FillRow> {
 export async function deleteFill(id: number): Promise<void> {
   const database = await getDb();
   await database.runAsync('DELETE FROM fills WHERE id = ?', id);
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+function toTripRow(r: {
+  id: number;
+  ts: number;
+  from_place: string | null;
+  to_place: string;
+  km: number;
+  fare: number;
+  extras: number;
+  odo_from_km: number | null;
+  odo_to_km: number | null;
+  fuel_l: number | null;
+  note: string | null;
+}): TripRow {
+  return {
+    id: r.id,
+    ts: r.ts,
+    fromPlace: r.from_place,
+    toPlace: r.to_place,
+    km: r.km,
+    fare: r.fare,
+    extras: r.extras,
+    odoFromKm: r.odo_from_km,
+    odoToKm: r.odo_to_km,
+    fuelL: r.fuel_l,
+    note: r.note,
+  };
+}
+
+export async function listTrips(): Promise<TripRow[]> {
+  const database = await getDb();
+  const rows = await database.getAllAsync<{
+    id: number;
+    ts: number;
+    from_place: string | null;
+    to_place: string;
+    km: number;
+    fare: number;
+    extras: number;
+    odo_from_km: number | null;
+    odo_to_km: number | null;
+    fuel_l: number | null;
+    note: string | null;
+  }>('SELECT * FROM trips ORDER BY ts ASC, id ASC');
+  return rows.map(toTripRow);
+}
+
+export async function insertTrip(trip: NewTrip): Promise<TripRow> {
+  const database = await getDb();
+  // `?? null` : le pont natif Android rejette les `undefined` (NPE au prepare).
+  const params: (string | number | null)[] = [
+    trip.ts ?? Date.now(),
+    trip.fromPlace ?? null,
+    trip.toPlace,
+    trip.km,
+    trip.fare,
+    trip.extras ?? 0,
+    trip.odoFromKm ?? null,
+    trip.odoToKm ?? null,
+    trip.fuelL ?? null,
+    trip.note ?? null,
+  ];
+  const result = await database
+    .runAsync(
+      `INSERT INTO trips
+        (ts, from_place, to_place, km, fare, extras, odo_from_km, odo_to_km, fuel_l, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ...params,
+    )
+    .catch((e: unknown) => {
+      throw new Error(`insertTrip: ${e instanceof Error ? e.message : String(e)}`);
+    });
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+  const created = await database.getFirstAsync<{
+    id: number;
+    ts: number;
+    from_place: string | null;
+    to_place: string;
+    km: number;
+    fare: number;
+    extras: number;
+    odo_from_km: number | null;
+    odo_to_km: number | null;
+    fuel_l: number | null;
+    note: string | null;
+  }>('SELECT * FROM trips WHERE id = ?', result.lastInsertRowId);
+  if (!created) throw new Error('Trajet introuvable après insertion.');
+  return toTripRow(created);
+}
+
+export async function updateTrip(id: number, trip: NewTrip): Promise<void> {
+  const database = await getDb();
+  const params: (string | number | null)[] = [
+    trip.ts ?? Date.now(),
+    trip.fromPlace ?? null,
+    trip.toPlace,
+    trip.km,
+    trip.fare,
+    trip.extras ?? 0,
+    trip.odoFromKm ?? null,
+    trip.odoToKm ?? null,
+    trip.fuelL ?? null,
+    trip.note ?? null,
+    id,
+  ];
+  await database
+    .runAsync(
+      `UPDATE trips SET
+        ts = ?, from_place = ?, to_place = ?, km = ?, fare = ?, extras = ?,
+        odo_from_km = ?, odo_to_km = ?, fuel_l = ?, note = ?
+       WHERE id = ?`,
+      ...params,
+    )
+    .catch((e: unknown) => {
+      throw new Error(`updateTrip: ${e instanceof Error ? e.message : String(e)}`);
+    });
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export async function deleteTrip(id: number): Promise<void> {
+  const database = await getDb();
+  await database.runAsync('DELETE FROM trips WHERE id = ?', id);
   await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
 }

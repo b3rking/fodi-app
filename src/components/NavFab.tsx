@@ -9,14 +9,15 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Gauge, Menu, Settings, X } from 'lucide-react-native';
+import { Gauge, Menu, Route, Settings, X } from 'lucide-react-native';
 import { brandAction } from '../core/theme';
 import { fr } from '../i18n/fr';
 
-type Href = '/' | '/settings';
+type Href = '/' | '/trips' | '/settings';
 
 const entries: { href: Href; label: string; Icon: typeof Gauge }[] = [
   { href: '/', label: fr.nav.fuel, Icon: Gauge },
+  { href: '/trips', label: fr.nav.trips, Icon: Route },
   { href: '/settings', label: fr.nav.settings, Icon: Settings },
 ];
 
@@ -44,7 +45,9 @@ export function NavFab() {
   };
 
   const isActive = (href: Href) =>
-    href === '/' ? pathname === '/' || pathname === '/index' : pathname === href;
+    href === '/'
+      ? pathname === '/' || pathname === '/index'
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   const go = (href: Href) => {
     setOpen(false);

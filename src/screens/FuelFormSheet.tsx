@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
-import { litresFromFraction, currentLevelLabel, type TankLevelDef } from '../core/fuel/engine';
+import { litresFromFraction, currentLevelLabel, replayLiveTank, totalLitres, type TankLevelDef } from '../core/fuel/engine';
 import { brandAction } from '../core/theme';
 import { formatFBu, formatLitres, formatPricePerLitre } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
+import { useTripsStore } from '../store/tripsStore';
 import { useToastStore } from '../store/toastStore';
 import { PrimaryButton, SecondaryButton } from '../components/buttons';
 import { fr } from '../i18n/fr';
@@ -24,6 +25,8 @@ export function FuelFormSheet({ visible, capL, onClose }: Props) {
   const addFill = useFuelStore((s) => s.addFill);
   const lastOdoKm = useFuelStore((s) => s.lastOdoKm);
   const levels = useFuelStore((s) => s.levels);
+  const fills = useFuelStore((s) => s.fills);
+  const trips = useTripsStore((s) => s.trips);
   const showToast = useToastStore((s) => s.show);
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -35,19 +38,48 @@ export function FuelFormSheet({ visible, capL, onClose }: Props) {
   const [levelBeforeId, setLevelBeforeId] = useState('empty');
   const [error, setError] = useState<string | null>(null);
 
-  // Réinitialise à chaque ouverture.
+  const fractionOf = (id: string) => levels.find((l) => l.id === id)?.fraction ?? 0;
+
+  // Niveau suivi par l'app (photos + trajets) : proposé par défaut,
+  // ajustable si la réalité diffère.
+  const liveLitres = useMemo(() => {
+    const { tank } = replayLiveTank(
+      capL,
+      fills.map((f) => ({
+        volumeL: f.volumeL,
+        pricePerLitre: f.pricePerLitre,
+        feeFBu: f.feeFBu,
+        litresBeforeL: f.litresBeforeL,
+        litresAfterL: f.litresAfterL,
+        odometerKm: f.odoKm,
+        ts: f.ts,
+      })),
+      trips.map((t) => ({ ts: t.ts, km: t.km, fuelL: t.fuelL })),
+    );
+    return totalLitres(tank);
+  }, [capL, fills, trips]);
+
+  const nearestLevelId = useMemo(() => {
+    const frac = capL > 0 ? liveLitres / capL : 0;
+    const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
+    let best = sorted[0]?.id ?? 'empty';
+    for (const level of sorted) {
+      if (level.fraction - frac < 1e-9) best = level.id;
+    }
+    return best;
+  }, [levels, liveLitres, capL]);
+
+  // Réinitialise à chaque ouverture (niveau d'arrivée = suivi de l'app).
   useEffect(() => {
     if (visible) {
       setLitres('');
       setPrice('');
       setStation('');
       setOdo(lastOdoKm != null ? String(lastOdoKm) : '');
-      setLevelBeforeId(levels[0]?.id ?? 'empty');
+      setLevelBeforeId(nearestLevelId);
       setError(null);
     }
-  }, [visible, lastOdoKm, levels]);
-
-  const fractionOf = (id: string) => levels.find((l) => l.id === id)?.fraction ?? 0;
+  }, [visible, lastOdoKm, levels, nearestLevelId]);
   // Niveau estimé en arrivant : c'est lui qui dit ce qui a brûlé depuis
   // la dernière fois (photo précédente − arrivée = consommation FIFO).
   const beforeL = litresFromFraction(fractionOf(levelBeforeId), capL);
@@ -168,6 +200,10 @@ export function FuelFormSheet({ visible, capL, onClose }: Props) {
           <View style={{ gap: 6 }}>
             <Text className={labelClass}>{fr.fuel.levelBefore}</Text>
             <LevelButtons levels={levels} value={levelBeforeId} onPick={setLevelBeforeId} />
+            <Text className="font-400 text-xs text-neutral-500 dark:text-neutral-400">
+              {fr.fuel.trackedPrefix} : {currentLevelLabel(levels, capL > 0 ? liveLitres / capL : 0)} (≈{' '}
+              {formatLitres(liveLitres)}).
+            </Text>
           </View>
 
           {preview ? (

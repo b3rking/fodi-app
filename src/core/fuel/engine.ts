@@ -224,9 +224,11 @@ export interface FillEvent {
   feeFBu?: number;
   /** Litres présents juste avant ce plein (photo précédente ou niveau d'ouverture). */
   litresBeforeL: number;
-  /** Litres relevés juste après ce plein (boutons de niveau). */
+  /** Litres relevés juste après ce plein (calculés : avant + volume). */
   litresAfterL: number;
   odometerKm?: number | null;
+  /** Horodatage (conservé sur l'intervalle pour la répartition aux trajets). */
+  ts?: number | null;
 }
 
 export interface BurnInterval {
@@ -236,6 +238,8 @@ export interface BurnInterval {
   km: number | null;
   /** km/L sur l'intervalle, `null` si incalculable (données manquantes). */
   kmPerLitre: number | null;
+  startTs: number | null;
+  endTs: number | null;
 }
 
 export interface TankReplay {
@@ -260,6 +264,7 @@ export function replayFills(capacityL: number, fills: FillEvent[]): TankReplay {
   let totalKm = 0;
   let hasKm = false;
   let prevOdo: number | null = null;
+  let prevTs: number | null = null;
 
   fills.forEach((fill, index) => {
     if (index === 0 && fill.litresBeforeL > 1e-9) {
@@ -278,7 +283,14 @@ export function replayFills(capacityL: number, fills: FillEvent[]): TankReplay {
         : null;
     const kmPerLitre = km != null && burned.consumedL > 1e-9 ? km / burned.consumedL : null;
 
-    intervals.push({ consumedL: burned.consumedL, costFBu: burned.costFBu, km, kmPerLitre });
+    intervals.push({
+      consumedL: burned.consumedL,
+      costFBu: burned.costFBu,
+      km,
+      kmPerLitre,
+      startTs: prevTs,
+      endTs: fill.ts ?? null,
+    });
     totalConsumedL += burned.consumedL;
     totalBurnCostFBu += burned.costFBu;
     if (km != null) {
@@ -292,6 +304,7 @@ export function replayFills(capacityL: number, fills: FillEvent[]): TankReplay {
       feeFBu: fill.feeFBu ?? 0,
     });
     if (fill.odometerKm != null) prevOdo = fill.odometerKm;
+    if (fill.ts != null) prevTs = fill.ts;
   });
 
   return {
@@ -304,6 +317,47 @@ export function replayFills(capacityL: number, fills: FillEvent[]): TankReplay {
   };
 }
 
+export interface TripBurnInput {
+  ts: number;
+  km: number;
+  /** Surcharge manuelle (prioritaire sur l'estimation). */
+  fuelL?: number | null;
+}
+
+export interface LiveTank {
+  /** Réservoir après déduction FIFO du brûlé estimé (photos + trajets). */
+  tank: TankState;
+  /** Brûlé estimé déduit (0 si rien à déduire). */
+  estimatedBurnL: number;
+}
+
+/**
+ * Rejoue les pleins puis déduit en FIFO le brûlé des trajets postérieurs
+ * au dernier ajout (surcharges manuelles d'abord, sinon km / conso moyenne).
+ * Les photos aux ajouts restent la vérité de référence : ceci n'est qu'une
+ * estimation d'affichage entre deux ajouts.
+ */
+export function replayLiveTank(
+  capacityL: number,
+  fills: FillEvent[],
+  trips: TripBurnInput[],
+): LiveTank {
+  const replay = replayFills(capacityL, fills);
+  const overall = replay.overallKmPerLitre;
+  const lastTs = fills.length > 0 ? (fills[fills.length - 1].ts ?? 0) : 0;
+  let estimatedBurnL = 0;
+  for (const trip of trips) {
+    if (trip.ts <= lastTs) continue;
+    if (trip.fuelL != null && Number.isFinite(trip.fuelL) && trip.fuelL >= 0) {
+      estimatedBurnL += trip.fuelL;
+    } else if (overall != null && overall > 0 && trip.km > 0) {
+      estimatedBurnL += trip.km / overall;
+    }
+  }
+  const tank = consume(replay.tank, estimatedBurnL).tank;
+  return { tank, estimatedBurnL };
+}
+
 /**
  * Litres d'ouverture au prix inconnu (premier plein : le fond de réservoir
  * existait déjà). On l'ajoute comme couche sans prix plutôt que d'inventer.
@@ -312,8 +366,7 @@ export function openingBalance(litres: number): FillLayer {
   return { litres: Math.max(0, litres), pricePerLitre: null };
 }
 
-export class FuelError extends Error {
-  code: 'INVALID_CAPACITY' | 'INVALID_VOLUME' | 'INVALID_PRICE' | 'INVALID_FEE' | 'INVALID_LEVELS' | 'OVERFLOW';
+export class FuelError extends Error {  code: 'INVALID_CAPACITY' | 'INVALID_VOLUME' | 'INVALID_PRICE' | 'INVALID_FEE' | 'INVALID_LEVELS' | 'OVERFLOW';
   details?: { maxLitres?: number };
 
   constructor(

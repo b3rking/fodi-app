@@ -690,19 +690,27 @@ part testable, and what makes the app portable later.
 
 ## 8. Build phases
 
-| # | Phase | Deliverable | Done when |
+> **Suivi au 15 oct. 2026.** P0–P2 terminés et prouvés (moteur FIFO testé au franc,
+> 40 tests, couverture 100 % lignes). Carburant utilisable seul : jauge (3 styles),
+> pleins, conso, niveaux configurables, paramètres persistés. Manquent côté
+> carburant : graphique conso, cycle de plein, seuil de rentabilité et verdict
+> (bloqués par les trajets et l'argent), photo de reçu, comptant/crédit.
+> **P3 Trajets construit** (liste + fiche + répartition FIFO au prorata, 46 tests) —
+> reste à valider sur appareil.
+
+| # | Phase | Deliverable | Done when | État |
 |---|---|---|---|
-| **P0** | Scaffold | Expo + TS + router + tabs, `expo-sqlite` boots, design tokens, dark-first UI kit | App runs on a real Android phone with 5 empty tabs |
-| **P1** | Data | Schema, migrations, seeded categories, `vehicle` + `tank_reading` flows | A reading can be written, read back, and survives a restart |
-| **P2** | **Fuel engine** ⭐ | `refill/consume/blend`, FIFO layers, partial fills, allocation, tank cycle, break-even, verdict — with a full test suite covering every case in 2.7 | 100% branch coverage on `src/core`; the 2 L → 6 L → full example asserts to the last franc |
-| **P3** | Trips | Quick-log sheet, list, filters, search, edit/duplicate/delete+undo | Ten trips logged, every total matches by hand |
-| **P4** | Fuel screen | Tank gauge, live tank graphic in the form, fill log, economy chart, break-even gauge | A fill-up takes under 20 seconds and the preview sentence is correct |
-| **P5** | Money | Categories, cost/income sheets, month totals, recurring costs, category drill-down | Month totals equal the sum of entries |
-| **P6** | Today | Hero profit, verdict card with the engine margin, tank card, three actions, 7-day strip, cash-in-pocket, pace projection | All three questions answered in 5 seconds |
-| **P7** | Reports | Week/Month/Year, trends, best/worst day, cost breakdown, CSV export, **printable month sheet** | Every number reconciles with Today and Money |
-| **P8** | Polish | Empty states, 60-second first run, receipts, reminders, big-font mode, accessibility, screenshot blocking | A non-technical driver uses it with no help |
-| **P9** | **Safety** ⭐ | 4-digit app lock, auto-mirror to app storage, mirror to a picked folder, `BACKUP` zip + share sheet, weekly integrity check, weekly backup-age reminder, **auto-detect restore on first launch** | Restore the backup on a wiped phone in under a minute, and the app shows him he still has his data |
-| **P10** | Field test | 3 real drivers, one week each. Measure: taps to log a fill, do they trust the break-even number, **did they actually send a backup**, what did they stop writing on paper | Fix the top 3 friction items, then ship |
+| **P0** | Scaffold | Expo + TS + router + tabs, `expo-sqlite` boots, design tokens, dark-first UI kit | App runs on a real Android phone with 5 empty tabs | ✅ fait (Single + Paramètres, SQLite OK, thème clair/sombre) |
+| **P1** | Data | Schema, migrations, seeded categories, `vehicle` + `tank_reading` flows | A reading can be written, read back, and survives a restart | 🟡 partiel (table `fills` + `settings` ; pas de `trips`, `vehicle`, `tank_reading`) |
+| **P2** | **Fuel engine** ⭐ | `refill/consume/blend`, FIFO layers, partial fills, allocation, tank cycle, break-even, verdict — with a full test suite covering every case in 2.7 | 100% branch coverage on `src/core`; the 2 L → 6 L → full example asserts to the last franc | 🟡 moteur FIFO + niveaux + formats faits et testés (allocation, cycle, break-even, verdict : en attente trajets/argent) |
+| **P3** | Trips | Quick-log sheet, list, filters, search, edit/duplicate/delete+undo | Ten trips logged, every total matches by hand | 🟡 construit (liste + fiche + répartition, à valider sur appareil) |
+| **P4** | Fuel screen | Tank gauge, live tank graphic in the form, fill log, economy chart, break-even gauge | A fill-up takes under 20 seconds and the preview sentence is correct | 🟡 partiel (jauge ×3, journal, fiche avec prévisualisation ; manque : graphique, cycle, break-even) |
+| **P5** | Money | Categories, cost/income sheets, month totals, recurring costs, category drill-down | Month totals equal the sum of entries | ⬜ prévu |
+| **P6** | Today | Hero profit, verdict card with the engine margin, tank card, three actions, 7-day strip, cash-in-pocket, pace projection | All three questions answered in 5 seconds | ⬜ prévu |
+| **P7** | Reports | Week/Month/Year, trends, best/worst day, cost breakdown, CSV export, **printable month sheet** | Every number reconciles with Today and Money | ⬜ prévu |
+| **P8** | Polish | Empty states, 60-second first run, receipts, reminders, big-font mode, accessibility, screenshot blocking | A non-technical driver uses it with no help | ⬜ prévu |
+| **P9** | **Safety** ⭐ | 4-digit app lock, auto-mirror to app storage, mirror to a picked folder, `BACKUP` zip + share sheet, weekly integrity check, weekly backup-age reminder, **auto-detect restore on first launch** | Restore the backup on a wiped phone in under a minute, and the app shows him he still has his data | ⬜ prévu |
+| **P10** | Field test | 3 real drivers, one week each. Measure: taps to log a fill, do they trust the break-even number, **did they actually send a backup**, what did they stop writing on paper | Fix the top 3 friction items, then ship | ⬜ prévu |
 
 **On risk:** P2 is the risky one for *correctness* — if the fuel maths is wrong the app is a liar,
 and the driver will find out on the road. P9 is the risky one for *trust* — a backup that exists

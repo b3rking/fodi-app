@@ -33,6 +33,11 @@ export function formatKmPerLitre(kmPerLitre: number | null | undefined): string 
   return `${kmPerLitre.toFixed(1).replace('.', ',')} km/L`;
 }
 
+/** `42` → `42 km`, `4.7` → `4,7 km`. */
+export function formatKm(km: number): string {
+  return `${km.toFixed(1).replace('.', ',')} km`;
+}
+
 /** `2026-10-15` → `15 oct. 2026` (court, français). */
 const MONTHS_FR = [
   'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',

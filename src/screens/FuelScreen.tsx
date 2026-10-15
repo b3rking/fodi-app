@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 import { Plus, Trash2 } from 'lucide-react-native';
-import { replayFills, totalLitres, tankCost, blendedPrice } from '../core/fuel/engine';
+import { replayFills, replayLiveTank, totalLitres, tankCost, blendedPrice } from '../core/fuel/engine';
 import {
   formatDayFr,
   formatFBu,
+  formatKm,
   formatKmPerLitre,
   formatLitres,
   formatPricePerLitre,
@@ -17,6 +18,7 @@ import { FuelFormSheet } from './FuelFormSheet';
 import { PrimaryButton } from '../components/buttons';
 import { BarsGauge, NeedleGauge } from '../components/FuelGauges';
 import { useToastStore } from '../store/toastStore';
+import { useTripsStore } from '../store/tripsStore';
 
 const RESERVE_L = 7;
 
@@ -25,6 +27,7 @@ export function FuelScreen() {
   const capL = useFuelStore((s) => s.capL);
   const levels = useFuelStore((s) => s.levels);
   const gauge = useFuelStore((s) => s.gauge);
+  const trips = useTripsStore((s) => s.trips);
   const removeFill = useFuelStore((s) => s.removeFill);
   const restoreFill = useFuelStore((s) => s.restoreFill);
   const showToast = useToastStore((s) => s.show);
@@ -67,15 +70,49 @@ export function FuelScreen() {
     [capL, fills],
   );
 
-  const litres = totalLitres(replay.tank);
-  const price = blendedPrice(replay.tank);
-  const value = tankCost(replay.tank);
-  const fraction = capL > 0 ? Math.min(1, Math.max(0, litres / capL)) : 0;
+  const overallKmL = replay.overallKmPerLitre;
+
+  // Utilisation depuis le dernier ajout : trajets postérieurs au dernier plein.
+  const lastFillTs = fills.length > 0 ? fills[fills.length - 1].ts : 0;
+  const tripsSinceFill = useMemo(
+    () => trips.filter((t) => t.ts > lastFillTs),
+    [trips, lastFillTs],
+  );
+  const kmSinceFill = useMemo(
+    () => tripsSinceFill.reduce((sum, t) => sum + t.km, 0),
+    [tripsSinceFill],
+  );
+
+  // Réservoir « vivant » : photos rejouées puis brûlé estimé déduit en FIFO.
+  // Les photos aux ajouts restent la vérité de référence.
+  const live = useMemo(
+    () =>
+      replayLiveTank(
+        capL,
+        fills.map((f) => ({
+          volumeL: f.volumeL,
+          pricePerLitre: f.pricePerLitre,
+          feeFBu: f.feeFBu,
+          litresBeforeL: f.litresBeforeL,
+          litresAfterL: f.litresAfterL,
+          odometerKm: f.odoKm,
+          ts: f.ts,
+        })),
+        tripsSinceFill.map((t) => ({ ts: t.ts, km: t.km, fuelL: t.fuelL })),
+      ),
+    [capL, fills, tripsSinceFill],
+  );
+  const estTripBurn = live.estimatedBurnL;
+  const displayLitres = totalLitres(live.tank);
+  const price = blendedPrice(live.tank);
+  const value = tankCost(live.tank);
+  const fraction = capL > 0 ? Math.min(1, Math.max(0, displayLitres / capL)) : 0;
   const gaugePct = fraction * 100;
   const recentKmL = [...replay.intervals].reverse().find((i) => i.kmPerLitre != null)?.kmPerLitre ?? null;
-  const autonomyKm =
-    replay.overallKmPerLitre != null ? litres * replay.overallKmPerLitre : null;
-  const showReserve = fills.length > 0 && litres < RESERVE_L;
+  const autonomyKm = overallKmL != null ? displayLitres * overallKmL : null;
+  const showReserve = fills.length > 0 && displayLitres < RESERVE_L;
+  // Estimation affichée (marquée ≈) : ce que la jauge a déduit.
+  const fuelSinceFill = estTripBurn > 1e-9 ? estTripBurn : null;
 
   return (
     <View className="flex-1">
@@ -100,7 +137,7 @@ export function FuelScreen() {
               ) : (
                 <View>
                   <Text className="font-700 text-2xl text-black dark:text-white">
-                    {formatLitres(litres)} / {formatLitres(capL)}
+                    {formatLitres(displayLitres)} / {formatLitres(capL)}
                   </Text>
                   <View className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-300 dark:bg-neutral-700">
                     <View
@@ -141,6 +178,22 @@ export function FuelScreen() {
               <Text className="font-400 text-sm text-neutral-600 dark:text-neutral-300">
                 {fr.fuel.averageEconomy} : {formatKmPerLitre(replay.overallKmPerLitre)}
               </Text>
+            </View>
+
+            <View className="rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">
+              <Text className="font-500 text-base text-black dark:text-white">
+                {fr.fuel.usageTitle}
+              </Text>
+              {fills.length === 0 || tripsSinceFill.length === 0 ? (
+                <Text className="font-400 text-sm text-neutral-600 dark:text-neutral-300">
+                  {fr.fuel.usageEmpty}
+                </Text>
+              ) : (
+                <Text className="font-400 text-sm text-neutral-600 dark:text-neutral-300">
+                  {tripsSinceFill.length} {fr.fuel.usageTrips} · {formatKm(kmSinceFill)}
+                  {fuelSinceFill != null ? ` · ≈ ${formatLitres(fuelSinceFill)}` : ''}
+                </Text>
+              )}
             </View>
 
             <PrimaryButton

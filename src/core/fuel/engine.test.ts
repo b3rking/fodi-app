@@ -5,14 +5,14 @@ import {
   consume,
   createEmptyTank,
   currentLevelLabel,
-  DEFAULT_TANK_LEVELS,
-  FuelError,
+  DEFAULT_TANK_LEVELS,  FuelError,
   levelsForBarCount,
   litresFromFraction,
   maxFillable,
   openingBalance,
   refill,
   replayFills,
+  replayLiveTank,
   tankCost,
   totalLitres,
   validateTankLevels,
@@ -288,5 +288,55 @@ describe('levelsForBarCount', () => {
     expect(currentLevelLabel(DEFAULT_TANK_LEVELS, 0.6)).toBe('½');
     expect(currentLevelLabel(DEFAULT_TANK_LEVELS, 1)).toBe('Plein');
     expect(currentLevelLabel([], 0.5)).toBe('');
+  });
+});
+
+describe('replayLiveTank', () => {
+  const fills = [
+    { volumeL: 20, pricePerLitre: 3800, litresBeforeL: 0, litresAfterL: 20, odometerKm: 1000, ts: 1000 },
+    { volumeL: 10, pricePerLitre: 3800, litresBeforeL: 10, litresAfterL: 20, odometerKm: 1108, ts: 2000 },
+  ];
+
+  it('sans trajet, réservoir photo intact', () => {
+    const live = replayLiveTank(60, fills, []);
+    expect(totalLitres(live.tank)).toBe(20);
+    expect(live.estimatedBurnL).toBe(0);
+  });
+
+  it('déduit le brûlé estimé des trajets postérieurs (10,8 km/L)', () => {
+    // 108 km / 10,8 = 10 L
+    const live = replayLiveTank(60, fills, [{ ts: 2500, km: 108 }]);
+    expect(live.estimatedBurnL).toBeCloseTo(10, 10);
+    expect(totalLitres(live.tank)).toBe(10);
+  });
+
+  it('la surcharge manuelle est prioritaire', () => {
+    const live = replayLiveTank(60, fills, [{ ts: 2500, km: 108, fuelL: 4 }]);
+    expect(live.estimatedBurnL).toBe(4);
+    expect(totalLitres(live.tank)).toBe(16);
+  });
+
+  it('ignore les trajets antérieurs et plafonne à zéro', () => {
+    const live = replayLiveTank(60, fills, [
+      { ts: 1500, km: 500 },
+      { ts: 2500, km: 1080 },
+    ]);
+    expect(totalLitres(live.tank)).toBe(0);
+  });
+
+  it('sans conso mesurée, seuls les manuels comptent', () => {
+    const noOdo = fills.map((f) => ({
+      volumeL: f.volumeL,
+      pricePerLitre: f.pricePerLitre,
+      litresBeforeL: f.litresBeforeL,
+      litresAfterL: f.litresAfterL,
+      ts: f.ts,
+    }));
+    const live = replayLiveTank(60, noOdo, [
+      { ts: 2500, km: 100 },
+      { ts: 2600, km: 50, fuelL: 3 },
+    ]);
+    expect(live.estimatedBurnL).toBe(3);
+    expect(totalLitres(live.tank)).toBe(17);
   });
 });
