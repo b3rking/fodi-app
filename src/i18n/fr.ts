@@ -47,6 +47,8 @@ export const fr = {
     cancel: 'Annuler',
     delete: 'Supprimer',
     deleteFillHint: 'Supprimer ce plein',
+    deleteTitle: 'Supprimer ce plein ?',
+    deleteConfirm: 'Supprimer',
 
     errVolume: 'Entrez un volume strictement positif.',
     errPrice: 'Entrez un prix au litre strictement positif.',
@@ -60,6 +62,13 @@ export const fr = {
     settings: 'Paramètres',
   },
 
+  nav: {
+    openMenu: 'Ouvrir la navigation',
+    closeMenu: 'Fermer la navigation',
+    fuel: 'Carburant',
+    settings: 'Paramètres',
+  },
+
   settings: {
     title: 'Paramètres',
     back: 'Retour',
@@ -67,6 +76,7 @@ export const fr = {
     tankCapacity: 'Taille du réservoir (L)',
     tankHint: 'Utilisée pour la jauge et les niveaux Vide · ¼ · ½ · ¾ · Plein.',
     save: 'Enregistrer',
+    saving: 'Enregistrement…',
     saved: 'Enregistré.',
     errCapRange: 'La capacité doit être entre 5 et 500 litres.',
     errCapTooSmall: 'Trop petit : le réservoir contient déjà plus que ça.',

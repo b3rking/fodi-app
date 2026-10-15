@@ -8,6 +8,7 @@ import { useColorScheme } from 'nativewind';
 import * as SystemUI from 'expo-system-ui';
 import { useThemeStore } from '../src/store/themeStore';
 import { useFuelStore } from '../src/store/fuelStore';
+import { NavFab } from '../src/components/NavFab';
 import { darkPalette, lightPalette } from '../src/core/theme';
 import { fr } from '../src/i18n/fr';
 
@@ -60,6 +61,7 @@ export default function RootLayout() {
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-black">
       <Slot />
+      <NavFab />
       <StatusBar
         animated
         translucent={false}

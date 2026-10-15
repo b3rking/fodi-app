@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
@@ -21,6 +21,7 @@ export function SettingsScreen() {
   const [capStr, setCapStr] = useState(String(capL));
   const [message, setMessage] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setCapStr(String(capL));
@@ -45,6 +46,7 @@ export function SettingsScreen() {
   );
 
   const save = () => {
+    if (saving) return;
     const parsed = Number(capStr.trim().replace(',', '.'));
     if (!Number.isFinite(parsed) || parsed < 5 || parsed > 500) {
       setMessage(fr.settings.errCapRange);
@@ -56,12 +58,16 @@ export function SettingsScreen() {
       setIsError(true);
       return;
     }
+    setSaving(true);
+    setMessage(null);
     void setCapL(parsed).then(
       () => {
+        setSaving(false);
         setMessage(fr.settings.saved);
         setIsError(false);
       },
       (e: unknown) => {
+        setSaving(false);
         setMessage(e instanceof Error ? e.message : String(e));
         setIsError(true);
       },
@@ -115,11 +121,16 @@ export function SettingsScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={fr.settings.save}
+          accessibilityState={{ disabled: saving, busy: saving }}
           onPress={save}
-          className="items-center rounded-full px-4 py-3"
-          style={{ backgroundColor: brandAction }}
+          disabled={saving}
+          className="flex-row items-center justify-center gap-2 rounded-full px-4 py-3"
+          style={{ backgroundColor: brandAction, opacity: saving ? 0.7 : 1 }}
         >
-          <Text className="font-500 text-base text-white">{fr.settings.save}</Text>
+          {saving ? <ActivityIndicator size="small" color="#FFFFFF" /> : null}
+          <Text className="font-500 text-base text-white">
+            {saving ? fr.settings.saving : fr.settings.save}
+          </Text>
         </Pressable>
       </View>
 
