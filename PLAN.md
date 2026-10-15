@@ -283,6 +283,13 @@ Amounts are FBu, distances km, fuel litres.
 
 ### 4.1 TODAY
 
+**Journée de travail (ajout oct. 2026).** La journée s'ouvre et se ferme
+explicitement : compteur de départ le matin (ouverture), compteur de retour
+le soir (fermeture). Ça donne : km du jour, heures travaillées, et la
+comparaison conso du jour vs moyenne (mauvais usage du carburant visible
+d'un coup d'œil). Table `workdays` : date, odo_start, odo_end, started_ts,
+ended_ts. Sans journée ouverte, l'écran Aujourd'hui le propose en un toucher.
+
 ```
   Wed 30 Sep                                    [⚙]  [Tank 22.5 L]
   ────────────────────────────────────────────────────────────────
@@ -705,7 +712,7 @@ part testable, and what makes the app portable later.
 | **P3** | Trips | Quick-log sheet, list, filters, search, edit/duplicate/delete+undo | Ten trips logged, every total matches by hand | ✅ validé sur appareil |
 | **P4** | Fuel screen | Tank gauge, live tank graphic in the form, fill log, economy chart, break-even gauge | A fill-up takes under 20 seconds and the preview sentence is correct | ✅ jauge ×3, journal, historique conso, cycle, seuil+verdict (reste : visuel animé dans la fiche) |
 | **P5** | Money | Categories, cost/income sheets, month totals, recurring costs, category drill-down | Month totals equal the sum of entries | 🟡 en cours (fondation : base + moteur) |
-| **P6** | Today | Hero profit, verdict card with the engine margin, tank card, three actions, 7-day strip, cash-in-pocket, pace projection | All three questions answered in 5 seconds | ⬜ prévu |
+| **P6** | Today | Hero profit, verdict card with the engine margin, tank card, three actions, 7-day strip, cash-in-pocket, pace projection | All three questions answered in 5 seconds | 🟡 construit (journée ouvrée/fermée, misuse, projection — à valider sur appareil) |
 | **P7** | Reports | Week/Month/Year, trends, best/worst day, cost breakdown, CSV export, **printable month sheet** | Every number reconciles with Today and Money | 🟡 construit (P&L, tendance, extrêmes, CSV, partage — reste : impression PDF) |
 | **P8** | Polish | Empty states, 60-second first run, receipts, reminders, big-font mode, accessibility, screenshot blocking | A non-technical driver uses it with no help | ⬜ prévu |
 | **P9** | **Safety** ⭐ | 4-digit app lock, auto-mirror to app storage, mirror to a picked folder, `BACKUP` zip + share sheet, weekly integrity check, weekly backup-age reminder, **auto-detect restore on first launch** | Restore the backup on a wiped phone in under a minute, and the app shows him he still has his data | ⬜ prévu |
@@ -746,3 +753,30 @@ no budgets, goals, streaks or achievements · no ads · no in-app purchases · n
 ---
 
 *Next step on your go: I start P0 + P2.*
+
+
+
+
+
+## Reste à faire (liste réécrite)
+
+### 1. Écran Aujourd'hui (P6) — le gros morceau
+- **Journée de travail** (nouveau) : bouton d'**ouverture** le matin (compteur de départ) et de **fermeture** le soir (compteur de retour) → km du jour, **heures travaillées**, niveau carburant au départ/retour
+- **Détection de mauvais usage** : conso du jour vs ta moyenne — écart anormal = alerte visible
+- **Le reste prévu** : profit du jour en héros, verdict + marge moteur, carte réservoir (niveau suivi), 3 boutons d'action (Trajet, Carburant, Coût), bandeau 7 jours, espèces en poche, projection sur la journée
+
+### 2. Carburant — visuel animé
+- La jauge **se remplit en direct dans la fiche** pendant la saisie des litres (au lieu de la seule phrase de prévisualisation)
+
+### 3. P9 Sécurité — en entier
+- Verrou PIN 4 chiffres (+ empreinte si dispo), anti-capture sur les écrans d'argent
+- Miroir auto du `.db`, dossier choisi par l'utilisateur
+- Bouton **SAUVEGARDE** : zip + partage (WhatsApp, mail, Drive…)
+- Rappel hebdo discret, contrôle d'intégrité visible, restauration auto sur nouveau téléphone
+
+### Explicitement reporté (sauf si tu redemandes)
+Photo de reçu · comptant/crédit · heure de départ trajets · dates passées en argent · impression PDF · polish P8 · test terrain P10.
+
+---
+
+**Ordre proposé** : 1 (Aujourd'hui) → 2 (visuel animé, petit) → 3 (P9). Dis « vas-y » et je liste les fonctionnalités d'Aujourd'hui en détail avant de coder, comme d'habitude.

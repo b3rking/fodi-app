@@ -9,14 +9,15 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Gauge, BarChart3, Menu, Route, Settings, Wallet, X } from 'lucide-react-native';
+import { Gauge, BarChart3, Home, Menu, Route, Settings, Wallet, X } from 'lucide-react-native';
 import { useThemeStore } from '../store/themeStore';
 import { fr } from '../i18n/fr';
 
-type Href = '/' | '/trips' | '/money' | '/reports' | '/settings';
+type Href = '/' | '/fuel' | '/trips' | '/money' | '/reports' | '/settings';
 
 const entries: { href: Href; label: string; Icon: typeof Gauge }[] = [
-  { href: '/', label: fr.nav.fuel, Icon: Gauge },
+  { href: '/', label: fr.nav.home, Icon: Home },
+  { href: '/fuel', label: fr.nav.fuel, Icon: Gauge },
   { href: '/trips', label: fr.nav.trips, Icon: Route },
   { href: '/money', label: fr.nav.money, Icon: Wallet },
   { href: '/reports', label: fr.nav.reports, Icon: BarChart3 },

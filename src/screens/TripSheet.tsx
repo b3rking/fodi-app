@@ -339,7 +339,7 @@ export function TripSheet({ state, onClose }: Props) {
             </View>
 
             {editing ? (
-              <View className="flex-row gap-3">
+              <View className="gap-3">
                 <SecondaryButton
                   label={fr.trips.duplicate}
                   onPress={() => {

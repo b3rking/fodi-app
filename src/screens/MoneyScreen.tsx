@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import { File, Paths } from 'expo-file-system';
+import { shareAsync } from 'expo-sharing';
 import { monthRange, totalsByCategory } from '../core/money/period';
 import { formatDayFr, formatFBu } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
@@ -45,6 +47,27 @@ export function MoneyScreen() {
   const [sheet, setSheet] = useState<MoneySheetState>({ mode: 'closed' });
   const [ruleSheet, setRuleSheet] = useState<RecurringSheetState>({ mode: 'closed' });
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [backupMsg, setBackupMsg] = useState<string | null>(null);
+
+  const exportBackup = () => {
+    void (async () => {
+      try {
+        const file = new File(Paths.document, 'fodi-sauvegarde.txt');
+        const content = `Fodi — Sauvegarde\nDate : ${formatDayFr(Date.now())}\n\n` +
+          `Courses : ${formatFBu(Math.round(fares))}\n` +
+          `Carburant : ${formatFBu(Math.round(monthFuelBought))}\n` +
+          `Autres coûts : ${formatFBu(Math.round(expensesTotal + occurrencesTotal))}\n` +
+          `Reste : ${formatFBu(Math.round(moneyIn - moneyOut))}\n`;
+        const writer = file.writableStream().getWriter();
+        await writer.write(new TextEncoder().encode(content));
+        await writer.close();
+        await shareAsync(file.uri);
+        setBackupMsg(fr.money.backupExported);
+      } catch {
+        setBackupMsg(fr.money.backupFailed);
+      }
+    })();
+  };
 
   const { from, to } = useMemo(() => monthRange(year, month), [year, month]);
   const labelById = useMemo(() => new Map(categories.map((c) => [c.id, c.label])), [categories]);

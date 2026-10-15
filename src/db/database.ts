@@ -116,7 +116,27 @@ async function doInit(): Promise<void> {
       category_id TEXT NOT NULL,
       active INTEGER NOT NULL DEFAULT 1
     );
+    CREATE TABLE IF NOT EXISTS workdays (
+      day TEXT PRIMARY KEY,
+      odo_start REAL,
+      odo_end REAL,
+      started_ts INTEGER,
+      ended_ts INTEGER,
+      fuel_start_l REAL,
+      fuel_end_l REAL
+    );
   `);
+  // Migration : ajoute les colonnes fuel si elles manquent (installs existantes).
+  const existing = await database.getAllAsync<{ name: string }>(
+    "SELECT name FROM pragma_table_info('workdays') WHERE name IN ('fuel_start_l', 'fuel_end_l')",
+  );
+  const existingCols = new Set(existing.map((r) => r.name));
+  if (!existingCols.has('fuel_start_l')) {
+    await database.execAsync('ALTER TABLE workdays ADD COLUMN fuel_start_l REAL');
+  }
+  if (!existingCols.has('fuel_end_l')) {
+    await database.execAsync('ALTER TABLE workdays ADD COLUMN fuel_end_l REAL');
+  }
   await database.runAsync(
     'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)',
     'tankCapL',
@@ -611,6 +631,96 @@ export async function deleteRecurring(id: number): Promise<void> {
   const database = await getDb();
   await database.runAsync('DELETE FROM recurrings WHERE id = ?', id);
   await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export interface WorkdayRow {
+  /** Jour local AAAA-MM-JJ. */
+  day: string;
+  odoStart: number | null;
+  odoEnd: number | null;
+  startedTs: number | null;
+  endedTs: number | null;
+  /** Litres estimés au départ (suivi photos + trajets). */
+  fuelStartL: number | null;
+  /** Litres estimés à la fermeture. */
+  fuelEndL: number | null;
+}
+
+export async function getWorkday(day: string): Promise<WorkdayRow | null> {
+  const database = await getDb();
+  const row = await database.getFirstAsync<{
+    day: string;
+    odo_start: number | null;
+    odo_end: number | null;
+    started_ts: number | null;
+    ended_ts: number | null;
+    fuel_start_l: number | null;
+    fuel_end_l: number | null;
+  }>('SELECT * FROM workdays WHERE day = ?', day);
+  if (!row) return null;
+  return {
+    day: row.day,
+    odoStart: row.odo_start,
+    odoEnd: row.odo_end,
+    startedTs: row.started_ts,
+    endedTs: row.ended_ts,
+    fuelStartL: row.fuel_start_l,
+    fuelEndL: row.fuel_end_l,
+  };
+}
+
+export async function listWorkdays(fromDay: string, toDay: string): Promise<WorkdayRow[]> {
+  const database = await getDb();
+  const rows = await database.getAllAsync<{
+    day: string;
+    odo_start: number | null;
+    odo_end: number | null;
+    started_ts: number | null;
+    ended_ts: number | null;
+    fuel_start_l: number | null;
+    fuel_end_l: number | null;
+  }>('SELECT * FROM workdays WHERE day >= ? AND day <= ? ORDER BY day ASC', fromDay, toDay);
+  return rows.map((row) => ({
+    day: row.day,
+    odoStart: row.odo_start,
+    odoEnd: row.odo_end,
+    startedTs: row.started_ts,
+    endedTs: row.ended_ts,
+    fuelStartL: row.fuel_start_l,
+    fuelEndL: row.fuel_end_l,
+  }));
+}
+
+export async function openWorkday(day: string, odoStart: number, fuelL: number | null): Promise<void> {
+  const database = await getDb();
+  await database.runAsync(
+    `INSERT INTO workdays (day, odo_start, started_ts, fuel_start_l)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(day) DO UPDATE SET
+       odo_start = excluded.odo_start,
+       started_ts = excluded.started_ts,
+       fuel_start_l = excluded.fuel_start_l`,
+    day,
+    odoStart,
+    Date.now(),
+    fuelL,
+  );
+}
+
+export async function closeWorkday(day: string, odoEnd: number, fuelL: number | null): Promise<void> {
+  const database = await getDb();
+  await database.runAsync(
+    `INSERT INTO workdays (day, odo_end, ended_ts, fuel_end_l)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(day) DO UPDATE SET
+       odo_end = excluded.odo_end,
+       ended_ts = excluded.ended_ts,
+       fuel_end_l = excluded.fuel_end_l`,
+    day,
+    odoEnd,
+    Date.now(),
+    fuelL,
+  );
 }
 
 export type CategoryKind = 'cost' | 'income';

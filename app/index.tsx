@@ -1,3 +1,3 @@
-import App from '../src/App';
+import { TodayScreen } from '../src/screens/TodayScreen';
 
-export default App;
+export default TodayScreen;

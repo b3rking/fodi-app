@@ -7,6 +7,7 @@ import { useFuelStore } from '../store/fuelStore';
 import { useTripsStore } from '../store/tripsStore';
 import { useThemeStore } from '../store/themeStore';
 import { useToastStore } from '../store/toastStore';
+import { TankVisual } from '../components/TankVisual';
 import { PrimaryButton, SecondaryButton } from '../components/buttons';
 import { fr } from '../i18n/fr';
 
@@ -151,16 +152,19 @@ export function FuelFormSheet({ visible, capL, onClose }: Props) {
             {fr.fuel.sheetTitle}
           </Text>
 
-          <View style={{ gap: 4 }}>
-            <Text className={labelClass}>{fr.fuel.litres}</Text>
-            <TextInput
-              value={litres}
-              onChangeText={setLitres}
-              keyboardType="decimal-pad"
-              placeholder="12"
-              placeholderTextColor={isDark ? '#737373' : '#A3A3A3'}
-              className={inputClass}
-            />
+          <View className="flex-row gap-4">
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text className={labelClass}>{fr.fuel.litres}</Text>
+              <TextInput
+                value={litres}
+                onChangeText={setLitres}
+                keyboardType="decimal-pad"
+                placeholder="12"
+                placeholderTextColor={isDark ? '#737373' : '#A3A3A3'}
+                className={inputClass}
+              />
+            </View>
+            <TankVisual capacityL={capL} litresTyped={preview?.volume ?? 0} beforeL={beforeL} />
           </View>
 
           <View style={{ gap: 4 }}>

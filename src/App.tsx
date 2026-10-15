@@ -1,7 +1,7 @@
 import React from 'react';
-import { FuelScreen } from './screens/FuelScreen';
+import { TodayScreen } from './screens/TodayScreen';
 
-/** Route index : l'écran Carburant (l'habillage vit dans app/_layout.tsx). */
+/** Route index : l'écran Aujourd'hui (l'habillage vit dans app/_layout.tsx). */
 export default function App() {
-  return <FuelScreen />;
+  return <TodayScreen />;
 }

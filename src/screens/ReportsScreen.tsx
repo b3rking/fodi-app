@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Share, Text, TextInput, View } from 'react-nativ
 import { File, Paths } from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
 import { priceTrips } from '../core/fuel/allocate';
+import { buildDailyPnl, type DayPnl } from '../core/money/dayPnl';
 import { blendedPrice, replayFills } from '../core/fuel/engine';
 import { perKmStats, verdictFor } from '../core/fuel/breakeven';
 import { expandRecurrings } from '../core/money/period';
@@ -31,23 +32,6 @@ function toDayInput(ts: number): string {
   const d = new Date(ts);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function dayKey(ts: number): string {
-  const d = new Date(ts);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-interface DayPnl {
-  key: string;
-  ts: number;
-  km: number;
-  fares: number;
-  fuel: number;
-  other: number;
-  incomes: number;
-  profit: number;
 }
 
 export function ReportsScreen() {
@@ -183,29 +167,22 @@ export function ReportsScreen() {
   });
   const verdict = verdictFor(stats.profitMarginPct, tripsR.length);
 
-  const days: DayPnl[] = useMemo(() => {
-    const map = new Map<string, DayPnl>();
-    const at = (ts: number): DayPnl => {
-      const key = dayKey(ts);
-      let d = map.get(key);
-      if (!d) {
-        d = { key, ts, km: 0, fares: 0, fuel: 0, other: 0, incomes: 0, profit: 0 };
-        map.set(key, d);
-      }
-      return d;
-    };
-    for (const t of tripsR) {
-      const d = at(t.ts);
-      d.km += t.km;
-      d.fares += t.fare + t.extras;
-      d.fuel += priced.get(t.id)?.fuelCostFBu ?? 0;
-    }
-    for (const i of monthEntries.incomes) at(i.ts).incomes += i.amount;
-    for (const e of monthEntries.expenses) at(e.ts).other += e.amount;
-    for (const o of occurrences) at(o.ts).other += o.amount;
-    for (const d of map.values()) d.profit = d.fares + d.incomes - d.fuel - d.other;
-    return [...map.values()].sort((a, b) => a.ts - b.ts);
-  }, [tripsR, priced, monthEntries, occurrences]);
+  const days: DayPnl[] = useMemo(
+    () =>
+      buildDailyPnl({
+        trips: tripsR.map((t) => ({
+          ts: t.ts,
+          km: t.km,
+          fare: t.fare,
+          extras: t.extras,
+          fuelCostFBu: priced.get(t.id)?.fuelCostFBu ?? null,
+        })),
+        expenses: monthEntries.expenses,
+        incomes: monthEntries.incomes,
+        occurrences,
+      }),
+    [tripsR, priced, monthEntries, occurrences],
+  );
 
   const activeDays = useMemo(() => days.filter((d) => d.fares > 0 || d.other > 0 || d.fuel > 0), [days]);
   const bestDay = useMemo(
@@ -327,7 +304,7 @@ export function ReportsScreen() {
 
         {preset === 'custom' ? (
           <View className="gap-2 rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">
-            <View className="flex-row gap-3">
+            <View className="gap-3">
               <View style={{ gap: 4, flex: 1 }}>
                 <Text className="font-500 text-sm text-black dark:text-white">{fr.reports.start}</Text>
                 <TextInput

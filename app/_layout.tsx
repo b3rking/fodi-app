@@ -1,5 +1,5 @@
 import '../global.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Slot } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { StatusBar, Text, View } from 'react-native';
@@ -10,10 +10,13 @@ import { useThemeStore } from '../src/store/themeStore';
 import { useFuelStore } from '../src/store/fuelStore';
 import { useTripsStore } from '../src/store/tripsStore';
 import { useMoneyStore } from '../src/store/moneyStore';
+import { useWorkdayStore } from '../src/store/workdayStore';
 import { NavFab } from '../src/components/NavFab';
 import { Toast } from '../src/components/Toast';
+import { LockScreen } from '../src/components/LockScreen';
 import { darkPalette, lightPalette } from '../src/core/theme';
 import { fr } from '../src/i18n/fr';
+import { isLockEnabled, recordActivity } from '../src/core/lock';
 
 /**
  * Racine de la navigation : habillage commun à toutes les routes
@@ -35,6 +38,9 @@ export default function RootLayout() {
   const loadTrips = useTripsStore((s) => s.load);
   const moneyReady = useMoneyStore((s) => s.ready);
   const loadMoney = useMoneyStore((s) => s.load);
+  const workdayReady = useWorkdayStore((s) => s.ready);
+  const loadWorkday = useWorkdayStore((s) => s.load);
+  const [locked, setLocked] = useState(false);
 
   // Synchronise le mode choisi avec NativeWind (qui ajoute/retire la classe `dark`).
   useEffect(() => {
@@ -51,21 +57,57 @@ export default function RootLayout() {
     void SystemUI.setBackgroundColorAsync(palette.surface);
   }, [palette.surface]);
 
-  // Base locale (SQLite) : pleins, trajets, argent + réglages.
+  // Base locale (SQLite) : tous les modules + réglages.
   useEffect(() => {
     void loadFuel();
     void loadTrips();
     void loadMoney();
+    void loadWorkday();
     void loadAccent();
-  }, [loadFuel, loadTrips, loadMoney, loadAccent]);
+  }, [loadFuel, loadTrips, loadMoney, loadWorkday, loadAccent]);
 
-  if (!fontsLoaded || !fuelReady || !tripsReady || !moneyReady) {
+  // Verrouillage : vérifie au montage.
+  useEffect(() => {
+    void isLockEnabled().then((enabled) => {
+      if (enabled) setLocked(true);
+    });
+  }, []);
+
+  // Auto-lock après 5 minutes d'inactivité (via ActivityIndicator).
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (locked) return;
+      void isLockEnabled().then((enabled) => {
+        if (enabled) setLocked(true);
+      });
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [locked]);
+
+  // Enregistre l'activité utilisateur pour l'auto-lock.
+  useEffect(() => {
+    const { AppState } = require('react-native');
+    const sub = AppState.addEventListener('change', (state: string) => {
+      if (state === 'active') recordActivity();
+    });
+    return () => sub.remove();
+  }, []);
+
+  if (!fontsLoaded || !fuelReady || !tripsReady || !moneyReady || !workdayReady) {
     return (
       <View className="flex-1 items-center justify-center bg-white dark:bg-black">
         <Text className="font-400 text-base text-neutral-600 dark:text-neutral-300">
           {fr.fuel.loading}
         </Text>
       </View>
+    );
+  }
+
+  if (locked) {
+    return (
+      <SafeAreaView className="flex-1 bg-white dark:bg-black">
+        <LockScreen onUnlock={() => setLocked(false)} />
+      </SafeAreaView>
     );
   }
 
