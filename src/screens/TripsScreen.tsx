@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, SectionList, Text, TextInput, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
-import { allocateFuel, windowForTs, type BurnWindow } from '../core/fuel/allocate';
+import { allocateFuel, priceTrips, windowForTs, type BurnWindow } from '../core/fuel/allocate';
 import { blendedPrice, replayFills } from '../core/fuel/engine';
 import { formatDayFr, formatFBu, formatKm, formatLitres } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
@@ -89,27 +89,28 @@ export function TripsScreen() {
   );
 
   const rows: RowModel[] = useMemo(() => {
-    const shares = new Map(
-      allocateFuel(
+    const priced = new Map(
+      priceTrips(
+        trips.map((t) => ({
+          id: t.id,
+          ts: t.ts,
+          km: t.km,
+          fare: t.fare,
+          extras: t.extras,
+          manualFuelL: t.fuelL,
+        })),
         windows,
-        trips.map((t) => ({ id: t.id, ts: t.ts, km: t.km })),
-      ).map((s) => [s.tripId, s]),
+        blend,
+      ).map((p) => [p.tripId, p]),
     );
     return trips.map((t) => {
-      const share = shares.get(t.id);
-      let fuelL = t.fuelL ?? share?.fuelL ?? null;
-      let fuelCostFBu: number | null = null;
-      if (fuelL != null) {
-        const window = windowForTs(windows, t.ts);
-        const price =
-          window && window.consumedL > 1e-9 ? window.costFBu / window.consumedL : blend;
-        fuelCostFBu = price != null ? fuelL * price : null;
-      } else if (share?.fuelCostFBu != null) {
-        fuelL = share.fuelL;
-        fuelCostFBu = share.fuelCostFBu;
-      }
-      const profitFBu = fuelCostFBu != null ? t.fare + t.extras - fuelCostFBu : null;
-      return { ...t, fuelL, fuelCostFBu, profitFBu };
+      const p = priced.get(t.id);
+      return {
+        ...t,
+        fuelL: p?.fuelL ?? null,
+        fuelCostFBu: p?.fuelCostFBu ?? null,
+        profitFBu: p?.profitFBu ?? null,
+      };
     });
   }, [trips, windows, blend]);
 

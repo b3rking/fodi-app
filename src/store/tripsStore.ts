@@ -23,6 +23,8 @@ interface TripsState {
   restoreTrip: (snapshot: Omit<TripRow, 'id'>) => Promise<void>;
   /** Dernier kilométrage connu vers une destination (pré-remplissage). */
   lastKmTo: (toPlace: string) => number | null;
+  /** Dernier tarif connu vers une destination (repère). */
+  lastFareTo: (toPlace: string) => number | null;
 }
 
 function derive(trips: TripRow[]) {
@@ -89,5 +91,12 @@ export const useTripsStore = create<TripsState>((set, get) => ({
       .reverse()
       .find((t) => t.toPlace.toLowerCase() === toPlace.trim().toLowerCase());
     return found ? found.km : null;
+  },
+
+  lastFareTo: (toPlace) => {
+    const found = [...get().trips]
+      .reverse()
+      .find((t) => t.toPlace.toLowerCase() === toPlace.trim().toLowerCase());
+    return found ? found.fare + found.extras : null;
   },
 }));

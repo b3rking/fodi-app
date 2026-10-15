@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allocateFuel, windowForTs, type BurnWindow } from './allocate';
+import { allocateFuel, priceTrips, windowForTs, type BurnWindow } from './allocate';
 
 const windows: BurnWindow[] = [
   { startTs: null, endTs: 2000, consumedL: 10, costFBu: 38000 },
@@ -49,5 +49,41 @@ describe('allocateFuel', () => {
       { tripId: 1, fuelL: null, fuelCostFBu: null },
     ]);
     expect(allocateFuel(windows, [])).toEqual([]);
+  });
+});
+
+describe('priceTrips', () => {
+  it('part allouée + profit (seul dans sa fenêtre : tout le brûlé)', () => {
+    const [priced] = priceTrips(
+      [{ id: 1, ts: 1000, km: 30, fare: 45000, extras: 0 }],
+      windows,
+      null,
+    );
+    expect(priced.fuelL).toBeCloseTo(10, 10);
+    expect(priced.fuelCostFBu).toBeCloseTo(38000, 10);
+    expect(priced.profitFBu).toBeCloseTo(45000 - 38000, 10);
+  });
+
+  it('surcharge manuelle valorisée au prix de la fenêtre', () => {
+    const [priced] = priceTrips(
+      [{ id: 1, ts: 1000, km: 30, fare: 13500, extras: 0, manualFuelL: 2 }],
+      windows,
+      null,
+    );
+    // Fenêtre 1 : 38 000 / 10 L = 3 800/L
+    expect(priced.fuelL).toBe(2);
+    expect(priced.fuelCostFBu).toBe(7600);
+    expect(priced.profitFBu).toBe(5900);
+  });
+
+  it('sans prix (ni fenêtre ni mixte), coût inconnu', () => {
+    const [priced] = priceTrips(
+      [{ id: 1, ts: 9999, km: 10, fare: 4500, extras: 0, manualFuelL: 1 }],
+      windows,
+      null,
+    );
+    expect(priced.fuelL).toBe(1);
+    expect(priced.fuelCostFBu).toBeNull();
+    expect(priced.profitFBu).toBeNull();
   });
 });

@@ -35,6 +35,7 @@ export function TripSheet({ state, onClose }: Props) {
   const restoreTrip = useTripsStore((s) => s.restoreTrip);
   const tripsLastOdo = useTripsStore((s) => s.lastOdoKm);
   const lastKmTo = useTripsStore((s) => s.lastKmTo);
+  const lastFareTo = useTripsStore((s) => s.lastFareTo);
   const recentPlaces = useTripsStore((s) => s.recentPlaces);
   const fills = useFuelStore((s) => s.fills);
   const capL = useFuelStore((s) => s.capL);
@@ -320,6 +321,9 @@ export function TripSheet({ state, onClose }: Props) {
                 {preview.fuelL != null && preview.cost != null
                   ? `Carburant ≈ ${formatLitres(preview.fuelL)} (${formatFBu(preview.cost)}). Profit ≈ ${formatFBu(preview.profit ?? 0)}.`
                   : `Recette ${formatFBu(preview.fareNum)}.`}
+                {to.trim() !== '' && lastFareTo(to) != null
+                  ? ` ${fr.trips.usualFare} : ${formatFBu(lastFareTo(to) as number)}.`
+                  : ''}
               </Text>
             ) : null}
 

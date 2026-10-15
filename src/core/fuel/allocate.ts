@@ -57,3 +57,50 @@ export function allocateFuel(windows: BurnWindow[], trips: TripInput[]): TripSha
     return { tripId: trip.id, fuelL, fuelCostFBu };
   });
 }
+
+export interface PricedTripInput extends TripInput {
+  fare: number;
+  extras: number;
+  /** Surcharge manuelle (prioritaire). */
+  manualFuelL?: number | null;
+}
+
+export interface PricedTrip {
+  tripId: number;
+  fuelL: number | null;
+  fuelCostFBu: number | null;
+  profitFBu: number | null;
+}
+
+/**
+ * Coût carburant + profit par trajet : surcharge manuelle valorisée au prix
+ * de sa fenêtre (sinon prix mixte courant), sinon part allouée au prorata.
+ */
+export function priceTrips(
+  trips: PricedTripInput[],
+  windows: BurnWindow[],
+  blendedPricePerLitre: number | null,
+): PricedTrip[] {
+  const shares = new Map(allocateFuel(windows, trips).map((s) => [s.tripId, s]));
+  return trips.map((trip) => {
+    const share = shares.get(trip.id);
+    let fuelL = trip.manualFuelL ?? share?.fuelL ?? null;
+    if (fuelL != null && !(fuelL >= 0)) fuelL = null;
+    let fuelCostFBu: number | null = null;
+    if (fuelL != null) {
+      const window = windowForTs(windows, trip.ts);
+      const price =
+        window && window.consumedL > 1e-9 ? window.costFBu / window.consumedL : blendedPricePerLitre;
+      fuelCostFBu = price != null ? fuelL * price : null;
+    } else if (share?.fuelCostFBu != null) {
+      fuelL = share.fuelL;
+      fuelCostFBu = share.fuelCostFBu;
+    }
+    return {
+      tripId: trip.id,
+      fuelL,
+      fuelCostFBu,
+      profitFBu: fuelCostFBu != null ? trip.fare + trip.extras - fuelCostFBu : null,
+    };
+  });
+}
