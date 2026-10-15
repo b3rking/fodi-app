@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
-import { litresFromFraction, currentLevelLabel, replayLiveTank, totalLitres, type TankLevelDef } from '../core/fuel/engine';
+import { litresFromFraction, formatCurrentLevel, formatLevelLabel, replayLiveTank, totalLitres, type LevelLabelStyle, type TankLevelDef } from '../core/fuel/engine';
 import { brandAction } from '../core/theme';
 import { formatFBu, formatLitres, formatPricePerLitre } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
@@ -25,6 +25,7 @@ export function FuelFormSheet({ visible, capL, onClose }: Props) {
   const addFill = useFuelStore((s) => s.addFill);
   const lastOdoKm = useFuelStore((s) => s.lastOdoKm);
   const levels = useFuelStore((s) => s.levels);
+  const levelFormat = useFuelStore((s) => s.levelFormat);
   const fills = useFuelStore((s) => s.fills);
   const trips = useTripsStore((s) => s.trips);
   const showToast = useToastStore((s) => s.show);
@@ -96,9 +97,9 @@ export function FuelFormSheet({ visible, capL, onClose }: Props) {
       priceL,
       total: volume * priceL,
       after,
-      afterLabel: currentLevelLabel(levels, capL > 0 ? after / capL : 0),
+      afterLabel: formatCurrentLevel(levels, capL > 0 ? after / capL : 0, levelFormat),
     };
-  }, [litres, price, beforeL, capL, levels]);
+  }, [litres, price, beforeL, capL, levels, levelFormat]);
 
   const save = () => {
     const volume = parseFrNumber(litres);
@@ -199,9 +200,9 @@ export function FuelFormSheet({ visible, capL, onClose }: Props) {
 
           <View style={{ gap: 6 }}>
             <Text className={labelClass}>{fr.fuel.levelBefore}</Text>
-            <LevelButtons levels={levels} value={levelBeforeId} onPick={setLevelBeforeId} />
+            <LevelButtons levels={levels} format={levelFormat} value={levelBeforeId} onPick={setLevelBeforeId} />
             <Text className="font-400 text-xs text-neutral-500 dark:text-neutral-400">
-              {fr.fuel.trackedPrefix} : {currentLevelLabel(levels, capL > 0 ? liveLitres / capL : 0)} (≈{' '}
+              {fr.fuel.trackedPrefix} : {formatCurrentLevel(levels, capL > 0 ? liveLitres / capL : 0, levelFormat)} (≈{' '}
               {formatLitres(liveLitres)}).
             </Text>
           </View>
@@ -232,10 +233,12 @@ export function FuelFormSheet({ visible, capL, onClose }: Props) {
 
 function LevelButtons({
   levels,
+  format,
   value,
   onPick,
 }: {
   levels: TankLevelDef[];
+  format: LevelLabelStyle;
   value: string;
   onPick: (id: string) => void;
 }) {
@@ -250,7 +253,7 @@ function LevelButtons({
             key={`${level.id}-${selected ? 'on' : 'off'}`}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            accessibilityLabel={level.label}
+            accessibilityLabel={formatLevelLabel(level.fraction, format)}
             onPress={() => onPick(level.id)}
             className={
               selected
@@ -266,7 +269,7 @@ function LevelButtons({
                   : 'font-400 text-sm text-black dark:text-white'
               }
             >
-              {level.label}
+              {formatLevelLabel(level.fraction, format)}
             </Text>
           </Pressable>
         );

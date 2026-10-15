@@ -144,6 +144,12 @@ export const fr = {
       needle: 'Aiguille',
       litres: 'Litres',
     } as const,
+    formatTitle: 'Écriture des niveaux',
+    formatHint: 'Un seul format partout : jamais de ¼ mélangé à des % .',
+    formatOptions: {
+      fractions: 'Fractions',
+      percent: 'Pourcentages',
+    } as const,
   },
 } as const;
 

@@ -27,6 +27,7 @@ export function FuelScreen() {
   const capL = useFuelStore((s) => s.capL);
   const levels = useFuelStore((s) => s.levels);
   const gauge = useFuelStore((s) => s.gauge);
+  const levelFormat = useFuelStore((s) => s.levelFormat);
   const trips = useTripsStore((s) => s.trips);
   const removeFill = useFuelStore((s) => s.removeFill);
   const restoreFill = useFuelStore((s) => s.restoreFill);
@@ -131,9 +132,9 @@ export function FuelScreen() {
                 {fr.fuel.yourTank}
               </Text>
               {gauge === 'bars' ? (
-                <BarsGauge levels={levels} fraction={fraction} trackColor={palette.line} />
+                <BarsGauge levels={levels} fraction={fraction} trackColor={palette.line} labelStyle={levelFormat} />
               ) : gauge === 'needle' ? (
-                <NeedleGauge levels={levels} fraction={fraction} trackColor={palette.line} />
+                <NeedleGauge levels={levels} fraction={fraction} trackColor={palette.line} labelStyle={levelFormat} />
               ) : (
                 <View>
                   <Text className="font-700 text-2xl text-black dark:text-white">

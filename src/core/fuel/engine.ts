@@ -40,24 +40,70 @@ export const MAX_TANK_LEVELS = 12;
 
 /** Libellé auto : symboles usuels, sinon pourcentage arrondi. */
 export function autoLevelLabel(fraction: number): string {
-  if (Math.abs(fraction) < 1e-9) return 'Vide';
-  if (Math.abs(fraction - 1) < 1e-9) return 'Plein';
-  if (Math.abs(fraction - 0.25) < 1e-9) return '¼';
-  if (Math.abs(fraction - 0.5) < 1e-9) return '½';
-  if (Math.abs(fraction - 0.75) < 1e-9) return '¾';
-  if (Math.abs(fraction - 1 / 3) < 0.005) return '⅓';
-  if (Math.abs(fraction - 2 / 3) < 0.005) return '⅔';
-  return `${Math.round(fraction * 100)} %`;
+  return formatLevelLabel(fraction, 'fractions');
 }
 
-/** Niveau le plus élevé atteint (toujours au moins le premier niveau). */
-export function currentLevelLabel(levels: TankLevelDef[], fraction: number): string {
-  const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
-  let label = sorted[0]?.label ?? '';
-  for (const level of sorted) {
-    if (level.fraction - fraction < 1e-9) label = level.label;
+export type LevelLabelStyle = 'fractions' | 'percent';
+
+const VULGAR_FRACTIONS: Array<[number, number, string]> = [
+  [1, 2, '½'],
+  [1, 3, '⅓'],
+  [2, 3, '⅔'],
+  [1, 4, '¼'],
+  [3, 4, '¾'],
+  [1, 5, '⅕'],
+  [2, 5, '⅖'],
+  [3, 5, '⅗'],
+  [4, 5, '⅘'],
+  [1, 6, '⅙'],
+  [5, 6, '⅚'],
+  [1, 8, '⅛'],
+  [3, 8, '⅜'],
+  [5, 8, '⅝'],
+  [7, 8, '⅞'],
+];
+
+/**
+ * Libellé d'un niveau dans un seul format, jamais mélangé :
+ * - `fractions` : Vide · ¼ · ½ · ¾ · ⅓ · ⅔ · … · Plein (a/b sinon) ;
+ * - `percent` : 0 % · 25 % · … · 100 %.
+ */
+export function formatLevelLabel(fraction: number, style: LevelLabelStyle): string {
+  const clamped = Math.min(1, Math.max(0, fraction));
+  if (style === 'percent') return `${Math.round(clamped * 100)} %`;
+  if (clamped < 1e-9) return 'Vide';
+  if (Math.abs(clamped - 1) < 1e-9) return 'Plein';
+  for (const [num, den, symbol] of VULGAR_FRACTIONS) {
+    if (Math.abs(clamped - num / den) < 0.005) return symbol;
   }
-  return label;
+  let bestNum = 1;
+  let bestDen = 1;
+  let bestErr = Math.abs(clamped - 1);
+  for (let den = 2; den <= 12; den++) {
+    const num = Math.round(clamped * den);
+    if (num <= 0 || num >= den) continue;
+    const err = Math.abs(clamped - num / den);
+    if (err < bestErr) {
+      bestErr = err;
+      bestNum = num;
+      bestDen = den;
+    }
+  }
+  return `${bestNum}/${bestDen}`;
+}
+
+/** Libellé du niveau atteint, dans le format choisi (jamais mélangé). */
+export function formatCurrentLevel(
+  levels: TankLevelDef[],
+  fraction: number,
+  style: LevelLabelStyle,
+): string {
+  const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
+  let best = sorted[0]?.fraction ?? 0;
+  for (const level of sorted) {
+    if (level.fraction - fraction < 1e-9) best = level.fraction;
+  }
+  return formatLevelLabel(best, style);
 }
 
 /**

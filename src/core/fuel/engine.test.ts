@@ -4,8 +4,9 @@ import {
   blendedPrice,
   consume,
   createEmptyTank,
-  currentLevelLabel,
-  DEFAULT_TANK_LEVELS,  FuelError,
+  DEFAULT_TANK_LEVELS,
+  formatCurrentLevel,
+  formatLevelLabel,  FuelError,
   levelsForBarCount,
   litresFromFraction,
   maxFillable,
@@ -263,11 +264,11 @@ describe('levelsForBarCount', () => {
     ]);
   });
 
-  it('8 barres : pourcentages arrondis', () => {
+  it('8 barres : fractions a/b quand pas de symbole', () => {
     const levels = levelsForBarCount(8);
     expect(levels[0].label).toBe('Vide');
     expect(levels[7].label).toBe('Plein');
-    expect(levels[1].label).toBe('14 %');
+    expect(levels[1].label).toBe('1/7');
     expect(validateTankLevels(levels)).toBeNull();
   });
 
@@ -280,14 +281,26 @@ describe('levelsForBarCount', () => {
   it('libellés auto : cas limites', () => {
     expect(autoLevelLabel(0)).toBe('Vide');
     expect(autoLevelLabel(1)).toBe('Plein');
-    expect(autoLevelLabel(0.1)).toBe('10 %');
+    expect(autoLevelLabel(0.1)).toBe('1/10');
   });
 
-  it('niveau courant : le plus élevé atteint', () => {
-    expect(currentLevelLabel(DEFAULT_TANK_LEVELS, 0)).toBe('Vide');
-    expect(currentLevelLabel(DEFAULT_TANK_LEVELS, 0.6)).toBe('½');
-    expect(currentLevelLabel(DEFAULT_TANK_LEVELS, 1)).toBe('Plein');
-    expect(currentLevelLabel([], 0.5)).toBe('');
+  it('formatLevelLabel : un seul format à la fois', () => {
+    expect(formatLevelLabel(0, 'fractions')).toBe('Vide');
+    expect(formatLevelLabel(1, 'fractions')).toBe('Plein');
+    expect(formatLevelLabel(0.25, 'fractions')).toBe('¼');
+    expect(formatLevelLabel(3 / 7, 'fractions')).toBe('3/7');
+    expect(formatLevelLabel(0, 'percent')).toBe('0 %');
+    expect(formatLevelLabel(0.25, 'percent')).toBe('25 %');
+    expect(formatLevelLabel(1, 'percent')).toBe('100 %');
+    expect(formatLevelLabel(1 / 7, 'percent')).toBe('14 %');
+  });
+
+  it('niveau courant : le plus élevé atteint, dans le bon format', () => {
+    expect(formatCurrentLevel(DEFAULT_TANK_LEVELS, 0, 'fractions')).toBe('Vide');
+    expect(formatCurrentLevel(DEFAULT_TANK_LEVELS, 0.6, 'fractions')).toBe('½');
+    expect(formatCurrentLevel(DEFAULT_TANK_LEVELS, 1, 'fractions')).toBe('Plein');
+    expect(formatCurrentLevel(DEFAULT_TANK_LEVELS, 0.6, 'percent')).toBe('50 %');
+    expect(formatCurrentLevel([], 0.5, 'percent')).toBe('0 %');
   });
 });
 

@@ -1,25 +1,29 @@
 import React from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { Minus, Plus } from 'lucide-react-native';
 import {
+  formatLevelLabel,
   levelsForBarCount,
   MAX_TANK_LEVELS,
   MIN_TANK_LEVELS,
+  type LevelLabelStyle,
   type TankLevelDef,
 } from '../core/fuel/engine';
 import { fr } from '../i18n/fr';
 
 interface Props {
   levels: TankLevelDef[];
+  /** Format d'aperçu (brouillon du même écran, pas encore enregistré). */
+  format: LevelLabelStyle;
   onChange: (levels: TankLevelDef[]) => void;
 }
 
 /**
  * Choix du nombre de barres (comme la jauge de la voiture) : les niveaux
- * sont générés régulièrement, sans rien taper. Les noms restent modifiables.
+ * sont générés régulièrement, sans rien taper. Aperçu dans le format choisi.
  */
-export function LevelsEditor({ levels, onChange }: Props) {
+export function LevelsEditor({ levels, format, onChange }: Props) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const iconColor = isDark ? '#FFFFFF' : '#000000';
@@ -27,10 +31,6 @@ export function LevelsEditor({ levels, onChange }: Props) {
   const setCount = (count: number) => {
     if (count < MIN_TANK_LEVELS || count > MAX_TANK_LEVELS) return;
     onChange(levelsForBarCount(count));
-  };
-
-  const rename = (id: string, label: string) => {
-    onChange(levels.map((l) => (l.id === id ? { ...l, label } : l)));
   };
 
   return (
@@ -64,20 +64,21 @@ export function LevelsEditor({ levels, onChange }: Props) {
         </Pressable>
       </View>
 
-      {levels.map((level) => (
-        <View key={level.id} className="flex-row items-center gap-2">
-          <Text className="font-500 w-16 text-center text-sm text-neutral-600 dark:text-neutral-300">
-            {Math.round(level.fraction * 100)} %
-          </Text>
-          <TextInput
-            value={level.label}
-            onChangeText={(v) => rename(level.id, v)}
-            placeholder={fr.settings.levelName}
-            placeholderTextColor={isDark ? '#737373' : '#A3A3A3'}
-            className="flex-1 rounded-xl border border-neutral-300 px-3 py-2 font-400 text-base text-black dark:border-neutral-600 dark:text-white"
-          />
-        </View>
-      ))}
+      <View className="flex-row flex-wrap gap-2">
+        {[...levels]
+          .sort((a, b) => a.fraction - b.fraction)
+          .map((level) => (
+            <View
+              key={level.id}
+              className="rounded-xl bg-neutral-200 px-3 py-2 dark:bg-neutral-700"
+              style={{ flexGrow: 1, alignItems: 'center' }}
+            >
+              <Text className="font-500 text-sm text-black dark:text-white">
+                {formatLevelLabel(level.fraction, format)}
+              </Text>
+            </View>
+          ))}
+      </View>
     </View>
   );
 }

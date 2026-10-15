@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { DEFAULT_TANK_LEVELS, validateTankLevels, type TankLevelDef } from '../core/fuel/engine';
+import { DEFAULT_TANK_LEVELS, validateTankLevels, type LevelLabelStyle, type TankLevelDef } from '../core/fuel/engine';
 
 export interface FillRow {
   id: number;
@@ -169,6 +169,29 @@ export async function setFuelGauge(style: FuelGaugeStyle): Promise<void> {
   await database.runAsync(
     'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
     'fuelGauge',
+    style,
+  );
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+/** Format des libellés de niveaux : fractions ou pourcentages (défaut : fractions). */
+export async function getLevelFormat(): Promise<LevelLabelStyle> {
+  const database = await getDb();
+  const row = await database.getFirstAsync<{ value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
+    'levelFormat',
+  );
+  return row?.value === 'percent' ? 'percent' : 'fractions';
+}
+
+export async function setLevelFormat(style: LevelLabelStyle): Promise<void> {
+  if (style !== 'fractions' && style !== 'percent') {
+    throw new Error('Format de niveaux inconnu.');
+  }
+  const database = await getDb();
+  await database.runAsync(
+    'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+    'levelFormat',
     style,
   );
   await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');

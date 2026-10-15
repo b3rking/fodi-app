@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { brandAction } from '../core/theme';
-import { currentLevelLabel, type TankLevelDef } from '../core/fuel/engine';
+import { formatCurrentLevel, type LevelLabelStyle, type TankLevelDef } from '../core/fuel/engine';
 
 interface GaugeProps {
   levels: TankLevelDef[];
@@ -10,18 +10,20 @@ interface GaugeProps {
   fraction: number;
   /** Couleur de piste (thémée par l'appelant). */
   trackColor: string;
+  /** Format d'affichage du libellé (choisi en paramètres). */
+  labelStyle: LevelLabelStyle;
 }
 
 /**
  * Jauge en barres debout, comme au tableau de bord : une barre allumée par
  * niveau atteint (y compris « Vide », toujours affiché). Aucune décimale inventée.
  */
-export function BarsGauge({ levels, fraction, trackColor }: GaugeProps) {
+export function BarsGauge({ levels, fraction, trackColor, labelStyle }: GaugeProps) {
   const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
   return (
     <View>
       <Text className="font-700 text-2xl text-black dark:text-white">
-        {currentLevelLabel(levels, fraction)}
+        {formatCurrentLevel(levels, fraction, labelStyle)}
       </Text>
       <View className="mt-2 h-14 flex-row justify-between">
         {sorted.map((level) => {
@@ -56,7 +58,7 @@ function dialPoint(fraction: number, radius: number): [number, number] {
  * Jauge à aiguille : cadran semi-circulaire gradué à vos niveaux,
  * aiguille sur la fraction actuelle.
  */
-export function NeedleGauge({ levels, fraction, trackColor }: GaugeProps) {
+export function NeedleGauge({ levels, fraction, trackColor, labelStyle }: GaugeProps) {
   const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
   const [nx, ny] = dialPoint(fraction, DIAL_R - 22);
   const [ax, ay] = dialPoint(0, DIAL_R);
@@ -64,7 +66,7 @@ export function NeedleGauge({ levels, fraction, trackColor }: GaugeProps) {
   return (
     <View className="items-center">
       <Text className="font-700 text-2xl text-black dark:text-white">
-        {currentLevelLabel(levels, fraction)}
+        {formatCurrentLevel(levels, fraction, labelStyle)}
       </Text>
       <Svg width={DIAL_W} height={DIAL_CY + 8} viewBox={`0 0 ${DIAL_W} ${DIAL_CY + 8}`}>
         <Path

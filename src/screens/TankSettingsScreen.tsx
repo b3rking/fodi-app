@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { replayFills, totalLitres, validateTankLevels, type TankLevelDef } from '../core/fuel/engine';
+import { replayFills, totalLitres, validateTankLevels, type LevelLabelStyle, type TankLevelDef } from '../core/fuel/engine';
 import { brandAction } from '../core/theme';
 import type { FuelGaugeStyle } from '../db/database';
 import { formatLitres } from '../core/format';
@@ -20,9 +20,11 @@ export function TankSettingsScreen() {
   const fills = useFuelStore((s) => s.fills);
   const storedLevels = useFuelStore((s) => s.levels);
   const storedGauge = useFuelStore((s) => s.gauge);
+  const storedFormat = useFuelStore((s) => s.levelFormat);
   const setCapL = useFuelStore((s) => s.setCapL);
   const setLevels = useFuelStore((s) => s.setLevels);
   const setGauge = useFuelStore((s) => s.setGauge);
+  const setLevelFormat = useFuelStore((s) => s.setLevelFormat);
   const showToast = useToastStore((s) => s.show);
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -30,6 +32,7 @@ export function TankSettingsScreen() {
   const [capStr, setCapStr] = useState(String(capL));
   const [levels, setLevelsDraft] = useState<TankLevelDef[]>(storedLevels);
   const [gauge, setGaugeDraft] = useState<FuelGaugeStyle>(storedGauge);
+  const [format, setFormatDraft] = useState<LevelLabelStyle>(storedFormat);
   const [message, setMessage] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -38,7 +41,8 @@ export function TankSettingsScreen() {
     setCapStr(String(capL));
     setLevelsDraft(storedLevels);
     setGaugeDraft(storedGauge);
-  }, [capL, storedLevels, storedGauge]);
+    setFormatDraft(storedFormat);
+  }, [capL, storedLevels, storedGauge, storedFormat]);
 
   const currentLitres = useMemo(
     () =>
@@ -81,7 +85,7 @@ export function TankSettingsScreen() {
     }
     setSaving(true);
     setMessage(null);
-    void Promise.all([setCapL(parsed), setLevels(levels), setGauge(gauge)]).then(
+    void Promise.all([setCapL(parsed), setLevels(levels), setGauge(gauge), setLevelFormat(format)]).then(
       () => {
         setSaving(false);
         setIsError(false);
@@ -126,7 +130,22 @@ export function TankSettingsScreen() {
       </View>
 
       <View className="rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">
-        <LevelsEditor levels={levels} onChange={setLevelsDraft} />
+        <LevelsEditor levels={levels} format={format} onChange={setLevelsDraft} />
+      </View>
+
+      <View className="gap-2 rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">
+        <Text className="font-500 text-base text-black dark:text-white">
+          {fr.settings.formatTitle}
+        </Text>
+        <Text className="font-400 text-sm text-neutral-600 dark:text-neutral-300">
+          {fr.settings.formatHint}
+        </Text>
+        <OptionPicker
+          options={FORMAT_OPTIONS}
+          value={format}
+          onPick={setFormatDraft}
+          labels={fr.settings.formatOptions}
+        />
       </View>
 
       <View className="gap-2 rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">
@@ -136,7 +155,12 @@ export function TankSettingsScreen() {
         <Text className="font-400 text-sm text-neutral-600 dark:text-neutral-300">
           {fr.settings.gaugeHint}
         </Text>
-        <GaugePicker value={gauge} onPick={setGaugeDraft} />
+        <OptionPicker
+          options={GAUGE_OPTIONS}
+          value={gauge}
+          onPick={setGaugeDraft}
+          labels={fr.settings.gaugeOptions}
+        />
       </View>
 
       {message ? (
@@ -156,18 +180,22 @@ export function TankSettingsScreen() {
 }
 
 const GAUGE_OPTIONS: FuelGaugeStyle[] = ['bars', 'needle', 'litres'];
+const FORMAT_OPTIONS: LevelLabelStyle[] = ['fractions', 'percent'];
 
-/** Choix du style de jauge (contrôlé, sans sauvegarde propre). */
-function GaugePicker({
+function OptionPicker<T extends string>({
+  options,
   value,
   onPick,
+  labels,
 }: {
-  value: FuelGaugeStyle;
-  onPick: (g: FuelGaugeStyle) => void;
+  options: T[];
+  value: T;
+  onPick: (v: T) => void;
+  labels: Record<T, string>;
 }) {
   return (
     <View className="flex-row gap-2">
-      {GAUGE_OPTIONS.map((option) => {
+      {options.map((option) => {
         const selected = option === value;
         return (
           <Pressable
@@ -175,7 +203,7 @@ function GaugePicker({
             key={`${option}-${selected ? 'on' : 'off'}`}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            accessibilityLabel={fr.settings.gaugeOptions[option]}
+            accessibilityLabel={labels[option]}
             onPress={() => onPick(option)}
             className={
               selected
@@ -191,7 +219,7 @@ function GaugePicker({
                   : 'font-400 text-sm text-black dark:text-white'
               }
             >
-              {fr.settings.gaugeOptions[option]}
+              {labels[option]}
             </Text>
           </Pressable>
         );

@@ -2,18 +2,20 @@ import { create } from 'zustand';
 import {
   deleteFill as dbDeleteFill,
   getFuelGauge as dbGetFuelGauge,
+  getLevelFormat as dbGetLevelFormat,
   getTankCapL,
   getTankLevels as dbGetTankLevels,
   initDatabase,
   insertFill as dbInsertFill,
   listFills,
   setFuelGauge as dbSetFuelGauge,
+  setLevelFormat as dbSetLevelFormat,
   setTankCapL as dbSetTankCapL,
   setTankLevels as dbSetTankLevels,
   type FillRow,
   type FuelGaugeStyle,
 } from '../db/database';
-import { DEFAULT_TANK_LEVELS, type TankLevelDef } from '../core/fuel/engine';
+import { DEFAULT_TANK_LEVELS, type LevelLabelStyle, type TankLevelDef } from '../core/fuel/engine';
 
 export interface NewFillInput {
   station: string | null;
@@ -30,6 +32,7 @@ interface FuelState {
   fills: FillRow[];
   levels: TankLevelDef[];
   gauge: FuelGaugeStyle;
+  levelFormat: LevelLabelStyle;
   /** Dernier compteur connu (pour pré-remplir). */
   lastOdoKm: number | null;
   load: () => Promise<void>;
@@ -41,6 +44,7 @@ interface FuelState {
   setCapL: (capL: number) => Promise<void>;
   setLevels: (levels: TankLevelDef[]) => Promise<void>;
   setGauge: (gauge: FuelGaugeStyle) => Promise<void>;
+  setLevelFormat: (style: LevelLabelStyle) => Promise<void>;
 }
 
 function derive(fills: FillRow[]) {
@@ -55,17 +59,19 @@ export const useFuelStore = create<FuelState>((set, get) => ({
   fills: [],
   levels: DEFAULT_TANK_LEVELS,
   gauge: 'bars',
+  levelFormat: 'fractions',
   lastOdoKm: null,
 
   load: async () => {
     await initDatabase();
-    const [capL, fills, levels, gauge] = await Promise.all([
+    const [capL, fills, levels, gauge, levelFormat] = await Promise.all([
       getTankCapL(),
       listFills(),
       dbGetTankLevels(),
       dbGetFuelGauge(),
+      dbGetLevelFormat(),
     ]);
-    set({ ready: true, capL, fills, levels, gauge, ...derive(fills) });
+    set({ ready: true, capL, fills, levels, gauge, levelFormat, ...derive(fills) });
   },
 
   addFill: async (input) => {
@@ -109,5 +115,10 @@ export const useFuelStore = create<FuelState>((set, get) => ({
   setGauge: async (gauge) => {
     await dbSetFuelGauge(gauge);
     set({ gauge });
+  },
+
+  setLevelFormat: async (style) => {
+    await dbSetLevelFormat(style);
+    set({ levelFormat: style });
   },
 }));
