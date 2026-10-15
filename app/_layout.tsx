@@ -9,6 +9,7 @@ import * as SystemUI from 'expo-system-ui';
 import { useThemeStore } from '../src/store/themeStore';
 import { useFuelStore } from '../src/store/fuelStore';
 import { useTripsStore } from '../src/store/tripsStore';
+import { useMoneyStore } from '../src/store/moneyStore';
 import { NavFab } from '../src/components/NavFab';
 import { Toast } from '../src/components/Toast';
 import { darkPalette, lightPalette } from '../src/core/theme';
@@ -31,6 +32,8 @@ export default function RootLayout() {
   const loadFuel = useFuelStore((s) => s.load);
   const tripsReady = useTripsStore((s) => s.ready);
   const loadTrips = useTripsStore((s) => s.load);
+  const moneyReady = useMoneyStore((s) => s.ready);
+  const loadMoney = useMoneyStore((s) => s.load);
 
   // Synchronise le mode choisi avec NativeWind (qui ajoute/retire la classe `dark`).
   useEffect(() => {
@@ -47,13 +50,14 @@ export default function RootLayout() {
     void SystemUI.setBackgroundColorAsync(palette.surface);
   }, [palette.surface]);
 
-  // Base locale (SQLite) : pleins, trajets + réglages.
+  // Base locale (SQLite) : pleins, trajets, argent + réglages.
   useEffect(() => {
     void loadFuel();
     void loadTrips();
-  }, [loadFuel, loadTrips]);
+    void loadMoney();
+  }, [loadFuel, loadTrips, loadMoney]);
 
-  if (!fontsLoaded || !fuelReady || !tripsReady) {
+  if (!fontsLoaded || !fuelReady || !tripsReady || !moneyReady) {
     return (
       <View className="flex-1 items-center justify-center bg-white dark:bg-black">
         <Text className="font-400 text-base text-neutral-600 dark:text-neutral-300">

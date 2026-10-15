@@ -690,22 +690,21 @@ part testable, and what makes the app portable later.
 
 ## 8. Build phases
 
-> **Suivi au 15 oct. 2026.** P0–P2 terminés et prouvés (moteur FIFO testé au franc,
-> 40 tests, couverture 100 % lignes). Carburant utilisable seul : jauge (3 styles),
-> pleins, conso, niveaux configurables, paramètres persistés. Manquent côté
-> carburant : graphique conso, cycle de plein, seuil de rentabilité et verdict
-> (bloqués par les trajets et l'argent), photo de reçu, comptant/crédit.
-> **P3 Trajets construit** (liste + fiche + répartition FIFO au prorata, 46 tests) —
-> reste à valider sur appareil.
+> **Suivi au 15 oct. 2026.** P0–P3 validés sur appareil (moteur FIFO testé au franc,
+> 52 tests, couverture 100 % lignes ; trajets créés/modifiés/supprimés, totaux
+> vérifiés à la main). Carburant + trajets terminés **hors parties monétaires**.
+> Restent côté carburant : graphique conso, cycle de plein, seuil de rentabilité
+> et verdict (tous débloqués par l'argent), photo de reçu, comptant/crédit.
+> Prochaine étape : **P5 Argent**.
 
 | # | Phase | Deliverable | Done when | État |
 |---|---|---|---|
 | **P0** | Scaffold | Expo + TS + router + tabs, `expo-sqlite` boots, design tokens, dark-first UI kit | App runs on a real Android phone with 5 empty tabs | ✅ fait (Single + Paramètres, SQLite OK, thème clair/sombre) |
 | **P1** | Data | Schema, migrations, seeded categories, `vehicle` + `tank_reading` flows | A reading can be written, read back, and survives a restart | 🟡 partiel (table `fills` + `settings` ; pas de `trips`, `vehicle`, `tank_reading`) |
-| **P2** | **Fuel engine** ⭐ | `refill/consume/blend`, FIFO layers, partial fills, allocation, tank cycle, break-even, verdict — with a full test suite covering every case in 2.7 | 100% branch coverage on `src/core`; the 2 L → 6 L → full example asserts to the last franc | 🟡 moteur FIFO + niveaux + formats faits et testés (allocation, cycle, break-even, verdict : en attente trajets/argent) |
-| **P3** | Trips | Quick-log sheet, list, filters, search, edit/duplicate/delete+undo | Ten trips logged, every total matches by hand | 🟡 construit (liste + fiche + répartition, à valider sur appareil) |
+| **P2** | **Fuel engine** ⭐ | `refill/consume/blend`, FIFO layers, partial fills, allocation, tank cycle, break-even, verdict — with a full test suite covering every case in 2.7 | 100% branch coverage on `src/core`; the 2 L → 6 L → full example asserts to the last franc | ✅ moteur, jauge ×3, niveaux, conso, réservoir vivant (reste monétaire : cycle, break-even, verdict) |
+| **P3** | Trips | Quick-log sheet, list, filters, search, edit/duplicate/delete+undo | Ten trips logged, every total matches by hand | ✅ validé sur appareil |
 | **P4** | Fuel screen | Tank gauge, live tank graphic in the form, fill log, economy chart, break-even gauge | A fill-up takes under 20 seconds and the preview sentence is correct | 🟡 partiel (jauge ×3, journal, fiche avec prévisualisation ; manque : graphique, cycle, break-even) |
-| **P5** | Money | Categories, cost/income sheets, month totals, recurring costs, category drill-down | Month totals equal the sum of entries | ⬜ prévu |
+| **P5** | Money | Categories, cost/income sheets, month totals, recurring costs, category drill-down | Month totals equal the sum of entries | 🟡 en cours (fondation : base + moteur) |
 | **P6** | Today | Hero profit, verdict card with the engine margin, tank card, three actions, 7-day strip, cash-in-pocket, pace projection | All three questions answered in 5 seconds | ⬜ prévu |
 | **P7** | Reports | Week/Month/Year, trends, best/worst day, cost breakdown, CSV export, **printable month sheet** | Every number reconciles with Today and Money | ⬜ prévu |
 | **P8** | Polish | Empty states, 60-second first run, receipts, reminders, big-font mode, accessibility, screenshot blocking | A non-technical driver uses it with no help | ⬜ prévu |

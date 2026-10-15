@@ -86,12 +86,50 @@ async function doInit(): Promise<void> {
       fuel_l REAL,
       note TEXT
     );
+    CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      label TEXT NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts INTEGER NOT NULL,
+      category_id TEXT NOT NULL,
+      amount REAL NOT NULL,
+      vendor TEXT,
+      note TEXT
+    );
+    CREATE TABLE IF NOT EXISTS incomes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts INTEGER NOT NULL,
+      category_id TEXT NOT NULL,
+      amount REAL NOT NULL,
+      note TEXT
+    );
+    CREATE TABLE IF NOT EXISTS recurrings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      label TEXT NOT NULL,
+      amount REAL NOT NULL,
+      cadence TEXT NOT NULL,
+      next_due INTEGER NOT NULL,
+      category_id TEXT NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1
+    );
   `);
   await database.runAsync(
     'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)',
     'tankCapL',
     String(DEFAULT_TANK_CAP_L),
   );
+  for (const category of SEED_CATEGORIES) {
+    await database.runAsync(
+      'INSERT OR IGNORE INTO categories (id, kind, label) VALUES (?, ?, ?)',
+      category.id,
+      category.kind,
+      category.label,
+    );
+  }
   // La base reste un fichier unique et valide : checkpoint après chaque écriture.
   await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
 }
@@ -373,3 +411,241 @@ export async function deleteTrip(id: number): Promise<void> {
   await database.runAsync('DELETE FROM trips WHERE id = ?', id);
   await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
 }
+
+export async function listCategories(kind: CategoryKind): Promise<CategoryRow[]> {
+  const database = await getDb();
+  return database.getAllAsync<CategoryRow>(
+    'SELECT id, kind, label FROM categories WHERE kind = ? ORDER BY label ASC',
+    kind,
+  );
+}
+
+export async function listExpenses(fromMs: number, toMs: number): Promise<ExpenseRow[]> {
+  const database = await getDb();
+  const rows = await database.getAllAsync<{
+    id: number;
+    ts: number;
+    category_id: string;
+    amount: number;
+    vendor: string | null;
+    note: string | null;
+  }>('SELECT * FROM expenses WHERE ts >= ? AND ts < ? ORDER BY ts DESC, id DESC', fromMs, toMs);
+  return rows.map((r) => ({
+    id: r.id,
+    ts: r.ts,
+    categoryId: r.category_id,
+    amount: r.amount,
+    vendor: r.vendor,
+    note: r.note,
+  }));
+}
+
+export async function insertExpense(expense: NewExpense): Promise<number> {
+  const database = await getDb();
+  const result = await database
+    .runAsync(
+      'INSERT INTO expenses (ts, category_id, amount, vendor, note) VALUES (?, ?, ?, ?, ?)',
+      expense.ts,
+      expense.categoryId,
+      expense.amount,
+      expense.vendor ?? null,
+      expense.note ?? null,
+    )
+    .catch((e: unknown) => {
+      throw new Error(`insertExpense: ${e instanceof Error ? e.message : String(e)}`);
+    });
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+  return result.lastInsertRowId;
+}
+
+export async function updateExpense(id: number, expense: NewExpense): Promise<void> {
+  const database = await getDb();
+  await database
+    .runAsync(
+      'UPDATE expenses SET ts = ?, category_id = ?, amount = ?, vendor = ?, note = ? WHERE id = ?',
+      expense.ts,
+      expense.categoryId,
+      expense.amount,
+      expense.vendor ?? null,
+      expense.note ?? null,
+      id,
+    )
+    .catch((e: unknown) => {
+      throw new Error(`updateExpense: ${e instanceof Error ? e.message : String(e)}`);
+    });
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export async function deleteExpense(id: number): Promise<void> {
+  const database = await getDb();
+  await database.runAsync('DELETE FROM expenses WHERE id = ?', id);
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export async function listIncomes(fromMs: number, toMs: number): Promise<IncomeRow[]> {
+  const database = await getDb();
+  const rows = await database.getAllAsync<{
+    id: number;
+    ts: number;
+    category_id: string;
+    amount: number;
+    note: string | null;
+  }>('SELECT * FROM incomes WHERE ts >= ? AND ts < ? ORDER BY ts DESC, id DESC', fromMs, toMs);
+  return rows.map((r) => ({
+    id: r.id,
+    ts: r.ts,
+    categoryId: r.category_id,
+    amount: r.amount,
+    note: r.note,
+  }));
+}
+
+export async function insertIncome(income: NewIncome): Promise<number> {
+  const database = await getDb();
+  const result = await database
+    .runAsync('INSERT INTO incomes (ts, category_id, amount, note) VALUES (?, ?, ?, ?)', income.ts, income.categoryId, income.amount, income.note ?? null)
+    .catch((e: unknown) => {
+      throw new Error(`insertIncome: ${e instanceof Error ? e.message : String(e)}`);
+    });
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+  return result.lastInsertRowId;
+}
+
+export async function updateIncome(id: number, income: NewIncome): Promise<void> {
+  const database = await getDb();
+  await database
+    .runAsync('UPDATE incomes SET ts = ?, category_id = ?, amount = ?, note = ? WHERE id = ?', income.ts, income.categoryId, income.amount, income.note ?? null, id)
+    .catch((e: unknown) => {
+      throw new Error(`updateIncome: ${e instanceof Error ? e.message : String(e)}`);
+    });
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export async function deleteIncome(id: number): Promise<void> {
+  const database = await getDb();
+  await database.runAsync('DELETE FROM incomes WHERE id = ?', id);
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export async function listRecurrings(): Promise<RecurringRow[]> {
+  const database = await getDb();
+  const rows = await database.getAllAsync<{
+    id: number;
+    label: string;
+    amount: number;
+    cadence: string;
+    next_due: number;
+    category_id: string;
+    active: number;
+  }>('SELECT * FROM recurrings ORDER BY next_due ASC, id ASC');
+  return rows.map((r) => ({
+    id: r.id,
+    label: r.label,
+    amount: r.amount,
+    cadence: r.cadence === 'weekly' ? 'weekly' : 'monthly',
+    nextDue: r.next_due,
+    categoryId: r.category_id,
+    active: r.active,
+  }));
+}
+
+export async function insertRecurring(rule: Omit<RecurringRow, 'id'>): Promise<number> {
+  const database = await getDb();
+  const result = await database.runAsync(
+    'INSERT INTO recurrings (label, amount, cadence, next_due, category_id, active) VALUES (?, ?, ?, ?, ?, ?)',
+    rule.label,
+    rule.amount,
+    rule.cadence,
+    rule.nextDue,
+    rule.categoryId,
+    rule.active,
+  );
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+  return result.lastInsertRowId;
+}
+
+export async function updateRecurring(id: number, rule: Omit<RecurringRow, 'id'>): Promise<void> {
+  const database = await getDb();
+  await database.runAsync(
+    'UPDATE recurrings SET label = ?, amount = ?, cadence = ?, next_due = ?, category_id = ?, active = ? WHERE id = ?',
+    rule.label,
+    rule.amount,
+    rule.cadence,
+    rule.nextDue,
+    rule.categoryId,
+    rule.active,
+    id,
+  );
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export async function deleteRecurring(id: number): Promise<void> {
+  const database = await getDb();
+  await database.runAsync('DELETE FROM recurrings WHERE id = ?', id);
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export type CategoryKind = 'cost' | 'income';
+
+export interface CategoryRow {
+  id: string;
+  kind: CategoryKind;
+  label: string;
+}
+
+export interface ExpenseRow {
+  id: number;
+  ts: number;
+  categoryId: string;
+  amount: number;
+  vendor: string | null;
+  note: string | null;
+}
+
+export interface IncomeRow {
+  id: number;
+  ts: number;
+  categoryId: string;
+  amount: number;
+  note: string | null;
+}
+
+export type RecurrenceCadence = 'weekly' | 'monthly';
+
+export interface RecurringRow {
+  id: number;
+  label: string;
+  amount: number;
+  cadence: RecurrenceCadence;
+  nextDue: number;
+  categoryId: string;
+  active: number;
+}
+
+export interface NewExpense extends Omit<ExpenseRow, 'id'> {
+  id?: number;
+}
+
+export interface NewIncome extends Omit<IncomeRow, 'id'> {
+  id?: number;
+}
+
+const SEED_CATEGORIES: CategoryRow[] = [
+  { id: 'maintenance', kind: 'cost', label: 'Entretien et réparations' },
+  { id: 'tyres', kind: 'cost', label: 'Pneus' },
+  { id: 'oil', kind: 'cost', label: 'Huile et vidange' },
+  { id: 'insurance', kind: 'cost', label: 'Assurance' },
+  { id: 'roadtax', kind: 'cost', label: 'Taxe de roulage' },
+  { id: 'govlevy', kind: 'cost', label: 'Prélèvement État' },
+  { id: 'data', kind: 'cost', label: 'Data et crédit' },
+  { id: 'wash', kind: 'cost', label: 'Lavage' },
+  { id: 'tolls', kind: 'cost', label: 'Péages et parking' },
+  { id: 'fines', kind: 'cost', label: 'Amendes' },
+  { id: 'union', kind: 'cost', label: 'Cotisations syndicat' },
+  { id: 'other-cost', kind: 'cost', label: 'Autre dépense' },
+  { id: 'delivery', kind: 'income', label: 'Livraison' },
+  { id: 'hire', kind: 'income', label: 'Location voiture' },
+  { id: 'tips', kind: 'income', label: 'Pourboires' },
+  { id: 'bonus', kind: 'income', label: 'Prime' },
+  { id: 'other-income', kind: 'income', label: 'Autre revenu' },
+];

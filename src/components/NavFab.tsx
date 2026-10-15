@@ -9,15 +9,16 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Gauge, Menu, Route, Settings, X } from 'lucide-react-native';
+import { Gauge, Menu, Route, Settings, Wallet, X } from 'lucide-react-native';
 import { brandAction } from '../core/theme';
 import { fr } from '../i18n/fr';
 
-type Href = '/' | '/trips' | '/settings';
+type Href = '/' | '/trips' | '/money' | '/settings';
 
 const entries: { href: Href; label: string; Icon: typeof Gauge }[] = [
   { href: '/', label: fr.nav.fuel, Icon: Gauge },
   { href: '/trips', label: fr.nav.trips, Icon: Route },
+  { href: '/money', label: fr.nav.money, Icon: Wallet },
   { href: '/settings', label: fr.nav.settings, Icon: Settings },
 ];
 
