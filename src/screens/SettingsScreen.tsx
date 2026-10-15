@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { replayFills, totalLitres } from '../core/fuel/engine';
-import { brandAction } from '../core/theme';
 import { formatLitres } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
+import { IconButton, PrimaryButton } from '../components/buttons';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
 import { fr } from '../i18n/fr';
 
@@ -77,14 +77,12 @@ export function SettingsScreen() {
   return (
     <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
       <View className="flex-row items-center gap-3">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={fr.settings.back}
+        <IconButton
+          label={fr.settings.back}
           onPress={() => router.back()}
-          className="rounded-full bg-neutral-100 p-2 text-black dark:bg-neutral-800 dark:text-white"
         >
           <ArrowLeft size={22} color={isDark ? '#FFFFFF' : '#000000'} />
-        </Pressable>
+        </IconButton>
         <Text className="font-700 text-3xl text-black dark:text-white">
           {fr.settings.title}
         </Text>
@@ -118,20 +116,12 @@ export function SettingsScreen() {
             {message}
           </Text>
         ) : null}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={fr.settings.save}
-          accessibilityState={{ disabled: saving, busy: saving }}
+        <PrimaryButton
+          label={saving ? fr.settings.saving : fr.settings.save}
           onPress={save}
           disabled={saving}
-          className="flex-row items-center justify-center gap-2 rounded-full px-4 py-3"
-          style={{ backgroundColor: brandAction, opacity: saving ? 0.7 : 1 }}
-        >
-          {saving ? <ActivityIndicator size="small" color="#FFFFFF" /> : null}
-          <Text className="font-500 text-base text-white">
-            {saving ? fr.settings.saving : fr.settings.save}
-          </Text>
-        </Pressable>
+          loading={saving}
+        />
       </View>
 
       <View className="gap-2 rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">

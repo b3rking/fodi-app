@@ -1,10 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, Text, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 import { Plus, Trash2 } from 'lucide-react-native';
 import { replayFills, totalLitres, tankCost, blendedPrice } from '../core/fuel/engine';
 import {
@@ -19,6 +14,7 @@ import { brandAction, darkPalette, lightPalette } from '../core/theme';
 import { useColorScheme } from 'nativewind';
 import { fr } from '../i18n/fr';
 import { FuelFormSheet } from './FuelFormSheet';
+import { PrimaryButton } from '../components/buttons';
 
 const RESERVE_L = 7;
 
@@ -30,12 +26,6 @@ export function FuelScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const { colorScheme } = useColorScheme();
   const palette = colorScheme === 'dark' ? darkPalette : lightPalette;
-
-  // Écrasement du bouton Plein au toucher (retour tactile animé).
-  const pleinScale = useSharedValue(1);
-  const pleinStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pleinScale.value }],
-  }));
 
   const confirmDelete = (id: number, detail: string) => {
     Alert.alert(fr.fuel.deleteTitle, detail, [
@@ -131,24 +121,11 @@ export function FuelScreen() {
               </Text>
             </View>
 
-            <Animated.View style={pleinStyle}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={fr.fuel.addFill}
-                onPress={() => setSheetOpen(true)}
-                onPressIn={() => {
-                  pleinScale.value = withSpring(0.96, { damping: 12, stiffness: 400 });
-                }}
-                onPressOut={() => {
-                  pleinScale.value = withSpring(1, { damping: 12, stiffness: 400 });
-                }}
-                className="flex-row items-center justify-center gap-2 rounded-full px-4 py-3"
-                style={{ backgroundColor: brandAction }}
-              >
-                <Plus size={20} color="#FFFFFF" />
-                <Text className="font-500 text-base text-white">{fr.fuel.addFill}</Text>
-              </Pressable>
-            </Animated.View>
+            <PrimaryButton
+              label={fr.fuel.addFill}
+              onPress={() => setSheetOpen(true)}
+              icon={<Plus size={20} color="#FFFFFF" />}
+            />
 
             <Text className="font-500 text-lg text-black dark:text-white">
               {fr.fuel.fills}

@@ -5,6 +5,7 @@ import { litresFromLevel, type TankLevel } from '../core/fuel/engine';
 import { brandAction } from '../core/theme';
 import { formatFBu, formatLitres, formatPricePerLitre } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
+import { PrimaryButton, SecondaryButton } from '../components/buttons';
 import { fr } from '../i18n/fr';
 
 const LEVELS: TankLevel[] = ['empty', 'quarter', 'half', 'threeQuarter', 'full'];
@@ -178,25 +179,8 @@ export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, 
           ) : null}
 
           <View className="flex-row gap-3">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={fr.fuel.cancel}
-              onPress={onClose}
-              className="flex-1 items-center rounded-full bg-neutral-200 px-4 py-3 dark:bg-neutral-700"
-            >
-              <Text className="font-500 text-base text-black dark:text-white">
-                {fr.fuel.cancel}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={fr.fuel.save}
-              onPress={save}
-              className="flex-1 items-center rounded-full px-4 py-3"
-              style={{ backgroundColor: brandAction }}
-            >
-              <Text className="font-500 text-base text-white">{fr.fuel.save}</Text>
-            </Pressable>
+            <SecondaryButton label={fr.fuel.cancel} onPress={onClose} />
+            <PrimaryButton label={fr.fuel.save} onPress={save} />
           </View>
         </View>
       </View>
