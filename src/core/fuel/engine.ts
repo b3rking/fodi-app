@@ -18,19 +18,94 @@ export interface TankState {
   layers: FillLayer[];
 }
 
-export type TankLevel = 'empty' | 'quarter' | 'half' | 'threeQuarter' | 'full';
+export interface TankLevelDef {
+  id: string;
+  /** Libellé affiché (ex. « ½ », « Plein », « Réserve »). */
+  label: string;
+  /** Fraction du réservoir, entre 0 et 1. */
+  fraction: number;
+}
 
-/** Fraction du réservoir pour chaque niveau (boutons Vide · ¼ · ½ · ¾ · Plein). */
-export const tankLevelFractions: Record<TankLevel, number> = {
-  empty: 0,
-  quarter: 0.25,
-  half: 0.5,
-  threeQuarter: 0.75,
-  full: 1,
-};
+/** Niveaux d'origine : Vide · ¼ · ½ · ¾ · Plein. */
+export const DEFAULT_TANK_LEVELS: TankLevelDef[] = [
+  { id: 'empty', label: 'Vide', fraction: 0 },
+  { id: 'quarter', label: '¼', fraction: 0.25 },
+  { id: 'half', label: '½', fraction: 0.5 },
+  { id: 'threeQuarter', label: '¾', fraction: 0.75 },
+  { id: 'full', label: 'Plein', fraction: 1 },
+];
 
-export function litresFromLevel(level: TankLevel, capacityL: number): number {
-  return tankLevelFractions[level] * capacityL;
+export const MIN_TANK_LEVELS = 2;
+export const MAX_TANK_LEVELS = 12;
+
+/** Libellé auto : symboles usuels, sinon pourcentage arrondi. */
+export function autoLevelLabel(fraction: number): string {
+  if (Math.abs(fraction) < 1e-9) return 'Vide';
+  if (Math.abs(fraction - 1) < 1e-9) return 'Plein';
+  if (Math.abs(fraction - 0.25) < 1e-9) return '¼';
+  if (Math.abs(fraction - 0.5) < 1e-9) return '½';
+  if (Math.abs(fraction - 0.75) < 1e-9) return '¾';
+  if (Math.abs(fraction - 1 / 3) < 0.005) return '⅓';
+  if (Math.abs(fraction - 2 / 3) < 0.005) return '⅔';
+  return `${Math.round(fraction * 100)} %`;
+}
+
+/** Niveau le plus élevé atteint (toujours au moins le premier niveau). */
+export function currentLevelLabel(levels: TankLevelDef[], fraction: number): string {
+  const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
+  let label = sorted[0]?.label ?? '';
+  for (const level of sorted) {
+    if (level.fraction - fraction < 1e-9) label = level.label;
+  }
+  return label;
+}
+
+/**
+ * Génère `count` niveaux régulièrement espacés de 0 à 100 %,
+ * comme les barres d'une jauge de voiture.
+ */
+export function levelsForBarCount(count: number): TankLevelDef[] {
+  if (!Number.isInteger(count) || count < MIN_TANK_LEVELS || count > MAX_TANK_LEVELS) {
+    throw new FuelError(
+      'INVALID_LEVELS',
+      `Le nombre de barres doit être entre ${MIN_TANK_LEVELS} et ${MAX_TANK_LEVELS}.`,
+    );
+  }
+  return Array.from({ length: count }, (_, i) => {
+    const fraction = count === 1 ? 1 : i / (count - 1);
+    return { id: `bar-${i + 1}-of-${count}`, label: autoLevelLabel(fraction), fraction };
+  });
+}
+
+export function litresFromFraction(fraction: number, capacityL: number): number {
+  return fraction * capacityL;
+}
+
+/**
+ * Valide une liste de niveaux personnalisés. `null` = valide,
+ * sinon message d'erreur en français.
+ */
+export function validateTankLevels(levels: TankLevelDef[]): string | null {
+  if (levels.length < MIN_TANK_LEVELS || levels.length > MAX_TANK_LEVELS) {
+    return `Il faut entre ${MIN_TANK_LEVELS} et ${MAX_TANK_LEVELS} niveaux.`;
+  }
+  for (const level of levels) {
+    if (level.label.trim() === '') return 'Chaque niveau doit avoir un nom.';
+    if (!Number.isFinite(level.fraction) || level.fraction < 0 || level.fraction > 1) {
+      return 'Chaque niveau doit être entre 0 et 100 %.';
+    }
+  }
+  const labels = levels.map((l) => l.label.trim());
+  if (new Set(labels).size !== labels.length) return 'Deux niveaux ont le même nom.';
+  const fractions = [...levels.map((l) => l.fraction)].sort((a, b) => a - b);
+  for (let i = 1; i < fractions.length; i++) {
+    if (fractions[i] - fractions[i - 1] < 1e-9) return 'Deux niveaux ont le même pourcentage.';
+  }
+  if (Math.abs(fractions[0]) > 1e-9) return 'Le premier niveau doit être 0 %.';
+  if (Math.abs(fractions[fractions.length - 1] - 1) > 1e-9) {
+    return 'Le dernier niveau doit être 100 %.';
+  }
+  return null;
 }
 
 export function createEmptyTank(capacityL: number): TankState {
@@ -238,7 +313,7 @@ export function openingBalance(litres: number): FillLayer {
 }
 
 export class FuelError extends Error {
-  code: 'INVALID_CAPACITY' | 'INVALID_VOLUME' | 'INVALID_PRICE' | 'INVALID_FEE' | 'OVERFLOW';
+  code: 'INVALID_CAPACITY' | 'INVALID_VOLUME' | 'INVALID_PRICE' | 'INVALID_FEE' | 'INVALID_LEVELS' | 'OVERFLOW';
   details?: { maxLitres?: number };
 
   constructor(

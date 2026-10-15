@@ -1,17 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
+  autoLevelLabel,
   blendedPrice,
   consume,
   createEmptyTank,
+  currentLevelLabel,
+  DEFAULT_TANK_LEVELS,
   FuelError,
-  litresFromLevel,
+  levelsForBarCount,
+  litresFromFraction,
   maxFillable,
   openingBalance,
   refill,
   replayFills,
   tankCost,
-  tankLevelFractions,
   totalLitres,
+  validateTankLevels,
 } from './engine';
 
 describe('createEmptyTank', () => {
@@ -167,16 +171,122 @@ describe('replayFills', () => {
   });
 });
 
-describe('niveaux de réservoir', () => {
-  it('cinq boutons, fractions exactes', () => {
-    expect(tankLevelFractions).toEqual({
-      empty: 0,
-      quarter: 0.25,
-      half: 0.5,
-      threeQuarter: 0.75,
-      full: 1,
-    });
-    expect(litresFromLevel('half', 60)).toBe(30);
-    expect(litresFromLevel('full', 60)).toBe(60);
+describe('niveaux de réservoir personnalisés', () => {
+  it('niveaux d’origine : cinq boutons de 0 à 100 %', () => {
+    expect(DEFAULT_TANK_LEVELS.map((l) => l.fraction)).toEqual([0, 0.25, 0.5, 0.75, 1]);
+    expect(litresFromFraction(0.5, 60)).toBe(30);
+    expect(litresFromFraction(1, 60)).toBe(60);
+  });
+
+  it('valide une liste correcte', () => {
+    expect(validateTankLevels(DEFAULT_TANK_LEVELS)).toBeNull();
+  });
+
+  it('rejette les listes trop courtes ou trop longues', () => {
+    expect(validateTankLevels([])).not.toBeNull();
+    expect(
+      validateTankLevels(
+        Array.from({ length: 13 }, (_, i) => ({ id: `l${i}`, label: `N${i}`, fraction: i / 12 })),
+      ),
+    ).not.toBeNull();
+  });
+
+  it('rejette les noms vides ou en double', () => {
+    expect(
+      validateTankLevels([
+        { id: 'a', label: '  ', fraction: 0 },
+        { id: 'b', label: 'Plein', fraction: 1 },
+      ]),
+    ).not.toBeNull();
+    expect(
+      validateTankLevels([
+        { id: 'a', label: 'Moitié', fraction: 0 },
+        { id: 'b', label: 'Moitié', fraction: 1 },
+      ]),
+    ).not.toBeNull();
+  });
+
+  it('rejette les pourcentages hors limites ou en double', () => {
+    expect(
+      validateTankLevels([
+        { id: 'a', label: 'Vide', fraction: -0.1 },
+        { id: 'b', label: 'Plein', fraction: 1 },
+      ]),
+    ).not.toBeNull();
+    expect(
+      validateTankLevels([
+        { id: 'a', label: 'Vide', fraction: 0 },
+        { id: 'b', label: 'Plein', fraction: NaN },
+      ]),
+    ).not.toBeNull();
+    expect(
+      validateTankLevels([
+        { id: 'a', label: 'Vide', fraction: 0 },
+        { id: 'b', label: 'Milieu', fraction: 0.5 },
+        { id: 'c', label: 'Encore', fraction: 0.5 },
+        { id: 'd', label: 'Plein', fraction: 1 },
+      ]),
+    ).not.toBeNull();
+  });
+
+  it('exige 0 % en premier et 100 % en dernier', () => {
+    expect(
+      validateTankLevels([
+        { id: 'a', label: 'Bas', fraction: 0.1 },
+        { id: 'b', label: 'Plein', fraction: 1 },
+      ]),
+    ).not.toBeNull();
+    expect(
+      validateTankLevels([
+        { id: 'a', label: 'Vide', fraction: 0 },
+        { id: 'b', label: 'Haut', fraction: 0.9 },
+      ]),
+    ).not.toBeNull();
+  });
+});
+
+describe('levelsForBarCount', () => {
+  it('4 barres : Vide · ⅓ · ⅔ · Plein', () => {
+    const levels = levelsForBarCount(4);
+    expect(levels.map((l) => l.fraction)).toEqual([0, 1 / 3, 2 / 3, 1]);
+    expect(levels.map((l) => l.label)).toEqual(['Vide', '⅓', '⅔', 'Plein']);
+    expect(validateTankLevels(levels)).toBeNull();
+  });
+
+  it('5 barres : symboles de quarts', () => {
+    expect(levelsForBarCount(5).map((l) => l.label)).toEqual([
+      'Vide',
+      '¼',
+      '½',
+      '¾',
+      'Plein',
+    ]);
+  });
+
+  it('8 barres : pourcentages arrondis', () => {
+    const levels = levelsForBarCount(8);
+    expect(levels[0].label).toBe('Vide');
+    expect(levels[7].label).toBe('Plein');
+    expect(levels[1].label).toBe('14 %');
+    expect(validateTankLevels(levels)).toBeNull();
+  });
+
+  it('rejette les nombres hors limites', () => {
+    for (const n of [0, 1, 13, 2.5, NaN]) {
+      expect(() => levelsForBarCount(n)).toThrowError(FuelError);
+    }
+  });
+
+  it('libellés auto : cas limites', () => {
+    expect(autoLevelLabel(0)).toBe('Vide');
+    expect(autoLevelLabel(1)).toBe('Plein');
+    expect(autoLevelLabel(0.1)).toBe('10 %');
+  });
+
+  it('niveau courant : le plus élevé atteint', () => {
+    expect(currentLevelLabel(DEFAULT_TANK_LEVELS, 0)).toBe('Vide');
+    expect(currentLevelLabel(DEFAULT_TANK_LEVELS, 0.6)).toBe('½');
+    expect(currentLevelLabel(DEFAULT_TANK_LEVELS, 1)).toBe('Plein');
+    expect(currentLevelLabel([], 0.5)).toBe('');
   });
 });

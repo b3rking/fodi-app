@@ -1,15 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
-import { litresFromLevel, type TankLevel } from '../core/fuel/engine';
+import { litresFromFraction, currentLevelLabel, type TankLevelDef } from '../core/fuel/engine';
 import { brandAction } from '../core/theme';
 import { formatFBu, formatLitres, formatPricePerLitre } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
 import { useToastStore } from '../store/toastStore';
 import { PrimaryButton, SecondaryButton } from '../components/buttons';
 import { fr } from '../i18n/fr';
-
-const LEVELS: TankLevel[] = ['empty', 'quarter', 'half', 'threeQuarter', 'full'];
 
 function parseFrNumber(raw: string): number {
   const normalized = raw.trim().replace(',', '.');
@@ -19,14 +17,13 @@ function parseFrNumber(raw: string): number {
 interface Props {
   visible: boolean;
   capL: number;
-  litresBeforeDefault: number;
-  hasHistory: boolean;
   onClose: () => void;
 }
 
-export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, onClose }: Props) {
+export function FuelFormSheet({ visible, capL, onClose }: Props) {
   const addFill = useFuelStore((s) => s.addFill);
   const lastOdoKm = useFuelStore((s) => s.lastOdoKm);
+  const levels = useFuelStore((s) => s.levels);
   const showToast = useToastStore((s) => s.show);
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -35,8 +32,7 @@ export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, 
   const [price, setPrice] = useState('');
   const [station, setStation] = useState('');
   const [odo, setOdo] = useState('');
-  const [levelAfter, setLevelAfter] = useState<TankLevel>('full');
-  const [levelBefore, setLevelBefore] = useState<TankLevel>('empty');
+  const [levelBeforeId, setLevelBeforeId] = useState('empty');
   const [error, setError] = useState<string | null>(null);
 
   // Réinitialise à chaque ouverture.
@@ -46,14 +42,15 @@ export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, 
       setPrice('');
       setStation('');
       setOdo(lastOdoKm != null ? String(lastOdoKm) : '');
-      setLevelAfter('full');
-      setLevelBefore('empty');
+      setLevelBeforeId(levels[0]?.id ?? 'empty');
       setError(null);
     }
-  }, [visible, lastOdoKm]);
+  }, [visible, lastOdoKm, levels]);
 
-  const beforeL = hasHistory ? litresBeforeDefault : litresFromLevel(levelBefore, capL);
-  const afterL = litresFromLevel(levelAfter, capL);
+  const fractionOf = (id: string) => levels.find((l) => l.id === id)?.fraction ?? 0;
+  // Niveau estimé en arrivant : c'est lui qui dit ce qui a brûlé depuis
+  // la dernière fois (photo précédente − arrivée = consommation FIFO).
+  const beforeL = litresFromFraction(fractionOf(levelBeforeId), capL);
 
   const preview = useMemo(() => {
     const volume = parseFrNumber(litres);
@@ -61,8 +58,15 @@ export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, 
     if (!Number.isFinite(volume) || volume <= 0 || !Number.isFinite(priceL) || priceL <= 0) {
       return null;
     }
-    return { volume, priceL, total: volume * priceL, after: beforeL + volume };
-  }, [litres, price, beforeL]);
+    const after = beforeL + volume;
+    return {
+      volume,
+      priceL,
+      total: volume * priceL,
+      after,
+      afterLabel: currentLevelLabel(levels, capL > 0 ? after / capL : 0),
+    };
+  }, [litres, price, beforeL, capL, levels]);
 
   const save = () => {
     const volume = parseFrNumber(litres);
@@ -91,7 +95,8 @@ export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, 
       pricePerLitre: priceL,
       odoKm: odoNum,
       litresBeforeL: beforeL,
-      litresAfterL: afterL,
+      // Niveau après = calculé (avant + volume), pas estimé : une question en moins.
+      litresAfterL: beforeL + volume,
     }).then(
       () => {
         showToast(fr.toast.fillSaved);
@@ -160,23 +165,16 @@ export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, 
             />
           </View>
 
-          {hasHistory ? null : (
-            <View style={{ gap: 6 }}>
-              <Text className={labelClass}>{fr.fuel.levelBefore}</Text>
-              <LevelButtons value={levelBefore} onPick={setLevelBefore} />
-            </View>
-          )}
-
           <View style={{ gap: 6 }}>
-            <Text className={labelClass}>{fr.fuel.levelAfter}</Text>
-            <LevelButtons value={levelAfter} onPick={setLevelAfter} />
+            <Text className={labelClass}>{fr.fuel.levelBefore}</Text>
+            <LevelButtons levels={levels} value={levelBeforeId} onPick={setLevelBeforeId} />
           </View>
 
           {preview ? (
             <Text className="font-400 text-sm text-neutral-600 dark:text-neutral-300">
               {formatLitres(preview.volume)} à {formatPricePerLitre(preview.priceL)} ={' '}
               {formatFBu(preview.total)} → réservoir {formatLitres(preview.after)}/
-              {formatLitres(capL)}.
+              {formatLitres(capL)} ({preview.afterLabel}).
             </Text>
           ) : null}
 
@@ -197,31 +195,33 @@ export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, 
 }
 
 function LevelButtons({
+  levels,
   value,
   onPick,
 }: {
-  value: TankLevel;
-  onPick: (l: TankLevel) => void;
+  levels: TankLevelDef[];
+  value: string;
+  onPick: (id: string) => void;
 }) {
   return (
-    <View className="flex-row gap-2">
-      {LEVELS.map((level) => {
-        const selected = level === value;
+    <View className="flex-row flex-wrap gap-2">
+      {levels.map((level) => {
+        const selected = level.id === value;
         return (
           <Pressable
             // Même raison que le sélecteur de thème : remontage propre au
             // changement de sélection (classes finales dès le premier rendu).
-            key={`${level}-${selected ? 'on' : 'off'}`}
+            key={`${level.id}-${selected ? 'on' : 'off'}`}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            accessibilityLabel={`${fr.fuel.levels[level]}`}
-            onPress={() => onPick(level)}
+            accessibilityLabel={level.label}
+            onPress={() => onPick(level.id)}
             className={
               selected
-                ? 'flex-1 items-center rounded-xl px-2 py-2'
-                : 'flex-1 items-center rounded-xl bg-neutral-200 px-2 py-2 dark:bg-neutral-700'
+                ? 'items-center rounded-xl px-3 py-2'
+                : 'items-center rounded-xl bg-neutral-200 px-3 py-2 dark:bg-neutral-700'
             }
-            style={selected ? { backgroundColor: brandAction } : undefined}
+            style={[selected ? { backgroundColor: brandAction } : undefined, { flexGrow: 1 }]}
           >
             <Text
               className={
@@ -230,7 +230,7 @@ function LevelButtons({
                   : 'font-400 text-sm text-black dark:text-white'
               }
             >
-              {fr.fuel.levels[level]}
+              {level.label}
             </Text>
           </Pressable>
         );

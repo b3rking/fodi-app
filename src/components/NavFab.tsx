@@ -49,7 +49,7 @@ export function NavFab() {
   const go = (href: Href) => {
     setOpen(false);
     spin.value = withTiming(0, { duration: 200 });
-    if (!isActive(href)) router.push(href);
+    if (!isActive(href)) router.push(href as '/');
   };
 
   return (

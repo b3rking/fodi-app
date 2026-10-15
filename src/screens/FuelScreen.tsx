@@ -15,6 +15,7 @@ import { useColorScheme } from 'nativewind';
 import { fr } from '../i18n/fr';
 import { FuelFormSheet } from './FuelFormSheet';
 import { PrimaryButton } from '../components/buttons';
+import { BarsGauge, NeedleGauge } from '../components/FuelGauges';
 import { useToastStore } from '../store/toastStore';
 
 const RESERVE_L = 7;
@@ -22,7 +23,8 @@ const RESERVE_L = 7;
 export function FuelScreen() {
   const fills = useFuelStore((s) => s.fills);
   const capL = useFuelStore((s) => s.capL);
-  const lastLitresAfterL = useFuelStore((s) => s.lastLitresAfterL);
+  const levels = useFuelStore((s) => s.levels);
+  const gauge = useFuelStore((s) => s.gauge);
   const removeFill = useFuelStore((s) => s.removeFill);
   const restoreFill = useFuelStore((s) => s.restoreFill);
   const showToast = useToastStore((s) => s.show);
@@ -68,7 +70,8 @@ export function FuelScreen() {
   const litres = totalLitres(replay.tank);
   const price = blendedPrice(replay.tank);
   const value = tankCost(replay.tank);
-  const gaugePct = Math.min(100, (litres / capL) * 100);
+  const fraction = capL > 0 ? Math.min(1, Math.max(0, litres / capL)) : 0;
+  const gaugePct = fraction * 100;
   const recentKmL = [...replay.intervals].reverse().find((i) => i.kmPerLitre != null)?.kmPerLitre ?? null;
   const autonomyKm =
     replay.overallKmPerLitre != null ? litres * replay.overallKmPerLitre : null;
@@ -90,19 +93,27 @@ export function FuelScreen() {
               <Text className="font-500 text-base text-black dark:text-white">
                 {fr.fuel.yourTank}
               </Text>
-              <Text className="font-700 text-2xl text-black dark:text-white">
-                {formatLitres(litres)} / {formatLitres(capL)}
-              </Text>
-              <View className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-300 dark:bg-neutral-700">
-                <View
-                  style={{
-                    width: `${gaugePct}%`,
-                    height: '100%',
-                    borderRadius: 999,
-                    backgroundColor: brandAction,
-                  }}
-                />
-              </View>
+              {gauge === 'bars' ? (
+                <BarsGauge levels={levels} fraction={fraction} trackColor={palette.line} />
+              ) : gauge === 'needle' ? (
+                <NeedleGauge levels={levels} fraction={fraction} trackColor={palette.line} />
+              ) : (
+                <View>
+                  <Text className="font-700 text-2xl text-black dark:text-white">
+                    {formatLitres(litres)} / {formatLitres(capL)}
+                  </Text>
+                  <View className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-300 dark:bg-neutral-700">
+                    <View
+                      style={{
+                        width: `${gaugePct}%`,
+                        height: '100%',
+                        borderRadius: 999,
+                        backgroundColor: brandAction,
+                      }}
+                    />
+                  </View>
+                </View>
+              )}
               {price != null ? (
                 <Text className="font-400 mt-2 text-sm text-neutral-600 dark:text-neutral-300">
                   {fr.fuel.runningOn} {formatPricePerLitre(price)} · {fr.fuel.worth}{' '}
@@ -185,8 +196,6 @@ export function FuelScreen() {
       <FuelFormSheet
         visible={sheetOpen}
         capL={capL}
-        litresBeforeDefault={lastLitresAfterL}
-        hasHistory={fills.length > 0}
         onClose={() => setSheetOpen(false)}
       />
     </View>

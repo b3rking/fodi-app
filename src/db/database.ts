@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { DEFAULT_TANK_LEVELS, validateTankLevels, type TankLevelDef } from '../core/fuel/engine';
 
 export interface FillRow {
   id: number;
@@ -71,6 +72,64 @@ export async function setTankCapL(capL: number): Promise<void> {
     'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
     'tankCapL',
     String(capL),
+  );
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+/** Niveaux personnalisés (JSON), défauts si absents ou corrompus. */
+export async function getTankLevels(): Promise<TankLevelDef[]> {  const database = await getDb();
+  const row = await database.getFirstAsync<{ value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
+    'tankLevels',
+  );
+  if (row) {
+    try {
+      const parsed = JSON.parse(row.value) as TankLevelDef[];
+      if (Array.isArray(parsed) && validateTankLevels(parsed) === null) return parsed;
+    } catch {
+      // Corrompu : on retombe sur les défauts ci-dessous.
+    }
+  }
+  return DEFAULT_TANK_LEVELS;
+}
+
+export async function setTankLevels(levels: TankLevelDef[]): Promise<void> {
+  const problem = validateTankLevels(levels);
+  if (problem) throw new Error(problem);
+  const database = await getDb();
+  await database.runAsync(
+    'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+    'tankLevels',
+    JSON.stringify(levels),
+  );
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export type FuelGaugeStyle = 'bars' | 'needle' | 'litres';
+
+const GAUGE_STYLES: FuelGaugeStyle[] = ['bars', 'needle', 'litres'];
+
+export function isFuelGaugeStyle(value: unknown): value is FuelGaugeStyle {
+  return typeof value === 'string' && (GAUGE_STYLES as string[]).includes(value);
+}
+
+/** Style de jauge préféré (défaut : barres, comme au tableau de bord). */
+export async function getFuelGauge(): Promise<FuelGaugeStyle> {
+  const database = await getDb();
+  const row = await database.getFirstAsync<{ value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
+    'fuelGauge',
+  );
+  return row && isFuelGaugeStyle(row.value) ? row.value : 'bars';
+}
+
+export async function setFuelGauge(style: FuelGaugeStyle): Promise<void> {
+  if (!isFuelGaugeStyle(style)) throw new Error('Style de jauge inconnu.');
+  const database = await getDb();
+  await database.runAsync(
+    'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+    'fuelGauge',
+    style,
   );
   await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
 }

@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 import {
   deleteFill as dbDeleteFill,
+  getFuelGauge as dbGetFuelGauge,
   getTankCapL,
+  getTankLevels as dbGetTankLevels,
   initDatabase,
   insertFill as dbInsertFill,
   listFills,
+  setFuelGauge as dbSetFuelGauge,
   setTankCapL as dbSetTankCapL,
+  setTankLevels as dbSetTankLevels,
   type FillRow,
+  type FuelGaugeStyle,
 } from '../db/database';
+import { DEFAULT_TANK_LEVELS, type TankLevelDef } from '../core/fuel/engine';
 
 export interface NewFillInput {
   station: string | null;
@@ -22,8 +28,8 @@ interface FuelState {
   ready: boolean;
   capL: number;
   fills: FillRow[];
-  /** Litres relevés après le dernier plein (0 si aucun). */
-  lastLitresAfterL: number;
+  levels: TankLevelDef[];
+  gauge: FuelGaugeStyle;
   /** Dernier compteur connu (pour pré-remplir). */
   lastOdoKm: number | null;
   load: () => Promise<void>;
@@ -33,12 +39,12 @@ interface FuelState {
   /** Réinsère une copie (annulation de suppression). */
   restoreFill: (snapshot: Omit<FillRow, 'id'>) => Promise<void>;
   setCapL: (capL: number) => Promise<void>;
+  setLevels: (levels: TankLevelDef[]) => Promise<void>;
+  setGauge: (gauge: FuelGaugeStyle) => Promise<void>;
 }
 
 function derive(fills: FillRow[]) {
-  const last = fills[fills.length - 1];
   return {
-    lastLitresAfterL: last ? last.litresAfterL : 0,
     lastOdoKm: [...fills].reverse().find((f) => f.odoKm != null)?.odoKm ?? null,
   };
 }
@@ -47,13 +53,19 @@ export const useFuelStore = create<FuelState>((set, get) => ({
   ready: false,
   capL: 60,
   fills: [],
-  lastLitresAfterL: 0,
+  levels: DEFAULT_TANK_LEVELS,
+  gauge: 'bars',
   lastOdoKm: null,
 
   load: async () => {
     await initDatabase();
-    const [capL, fills] = await Promise.all([getTankCapL(), listFills()]);
-    set({ ready: true, capL, fills, ...derive(fills) });
+    const [capL, fills, levels, gauge] = await Promise.all([
+      getTankCapL(),
+      listFills(),
+      dbGetTankLevels(),
+      dbGetFuelGauge(),
+    ]);
+    set({ ready: true, capL, fills, levels, gauge, ...derive(fills) });
   },
 
   addFill: async (input) => {
@@ -86,5 +98,16 @@ export const useFuelStore = create<FuelState>((set, get) => ({
     }
     await dbSetTankCapL(capL);
     set({ capL });
+  },
+
+  setLevels: async (levels) => {
+    const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
+    await dbSetTankLevels(sorted);
+    set({ levels: sorted });
+  },
+
+  setGauge: async (gauge) => {
+    await dbSetFuelGauge(gauge);
+    set({ gauge });
   },
 }));
