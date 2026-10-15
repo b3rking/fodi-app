@@ -13,8 +13,8 @@ interface GaugeProps {
 }
 
 /**
- * Jauge en barres, comme au tableau de bord : une barre allumée par
- * niveau atteint. Aucune décimale inventée.
+ * Jauge en barres debout, comme au tableau de bord : une barre allumée par
+ * niveau atteint (y compris « Vide », toujours affiché). Aucune décimale inventée.
  */
 export function BarsGauge({ levels, fraction, trackColor }: GaugeProps) {
   const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
@@ -23,15 +23,17 @@ export function BarsGauge({ levels, fraction, trackColor }: GaugeProps) {
       <Text className="font-700 text-2xl text-black dark:text-white">
         {currentLevelLabel(levels, fraction)}
       </Text>
-      <View className="mt-2 flex-row gap-1">
+      <View className="mt-2 h-14 flex-row justify-between">
         {sorted.map((level) => {
-          const on = level.fraction - fraction < 1e-9 && level.fraction > 1e-9;
-          const isZero = level.fraction < 1e-9;
+          const on = level.fraction - fraction < 1e-9;
           return (
             <View
               key={level.id}
-              className="h-4 flex-1 rounded-full"
-              style={{ backgroundColor: isZero ? 'transparent' : on ? brandAction : trackColor }}
+              style={{
+                backgroundColor: on ? brandAction : trackColor,
+                borderRadius: 9999,
+                width: `${(100 / sorted.length) * 0.7}%`,
+              }}
             />
           );
         })}
