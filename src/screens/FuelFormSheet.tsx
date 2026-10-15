@@ -5,6 +5,7 @@ import { litresFromLevel, type TankLevel } from '../core/fuel/engine';
 import { brandAction } from '../core/theme';
 import { formatFBu, formatLitres, formatPricePerLitre } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
+import { useToastStore } from '../store/toastStore';
 import { PrimaryButton, SecondaryButton } from '../components/buttons';
 import { fr } from '../i18n/fr';
 
@@ -26,6 +27,7 @@ interface Props {
 export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, onClose }: Props) {
   const addFill = useFuelStore((s) => s.addFill);
   const lastOdoKm = useFuelStore((s) => s.lastOdoKm);
+  const showToast = useToastStore((s) => s.show);
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -90,7 +92,13 @@ export function FuelFormSheet({ visible, capL, litresBeforeDefault, hasHistory, 
       odoKm: odoNum,
       litresBeforeL: beforeL,
       litresAfterL: afterL,
-    }).then(onClose, (e: unknown) => setError(e instanceof Error ? e.message : String(e)));
+    }).then(
+      () => {
+        showToast(fr.toast.fillSaved);
+        onClose();
+      },
+      (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
+    );
   };
 
   const inputClass =

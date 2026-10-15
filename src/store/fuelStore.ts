@@ -28,7 +28,10 @@ interface FuelState {
   lastOdoKm: number | null;
   load: () => Promise<void>;
   addFill: (input: NewFillInput) => Promise<FillRow>;
-  removeFill: (id: number) => Promise<void>;
+  /** Supprime et renvoie la copie pour annulation, `null` si introuvable. */
+  removeFill: (id: number) => Promise<Omit<FillRow, 'id'> | null>;
+  /** Réinsère une copie (annulation de suppression). */
+  restoreFill: (snapshot: Omit<FillRow, 'id'>) => Promise<void>;
   setCapL: (capL: number) => Promise<void>;
 }
 
@@ -40,7 +43,7 @@ function derive(fills: FillRow[]) {
   };
 }
 
-export const useFuelStore = create<FuelState>((set) => ({
+export const useFuelStore = create<FuelState>((set, get) => ({
   ready: false,
   capL: 60,
   fills: [],
@@ -61,7 +64,18 @@ export const useFuelStore = create<FuelState>((set) => ({
   },
 
   removeFill: async (id) => {
+    const snapshot = get().fills.find((f) => f.id === id) ?? null;
+    if (!snapshot) return null;
     await dbDeleteFill(id);
+    const fills = await listFills();
+    set({ fills, ...derive(fills) });
+    const { id: _dropped, ...rest } = snapshot;
+    void _dropped;
+    return rest;
+  },
+
+  restoreFill: async (snapshot) => {
+    await dbInsertFill({ ...snapshot, feeFBu: snapshot.feeFBu ?? 0 });
     const fills = await listFills();
     set({ fills, ...derive(fills) });
   },

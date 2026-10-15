@@ -9,6 +9,7 @@ import * as SystemUI from 'expo-system-ui';
 import { useThemeStore } from '../src/store/themeStore';
 import { useFuelStore } from '../src/store/fuelStore';
 import { NavFab } from '../src/components/NavFab';
+import { Toast } from '../src/components/Toast';
 import { darkPalette, lightPalette } from '../src/core/theme';
 import { fr } from '../src/i18n/fr';
 
@@ -62,6 +63,7 @@ export default function RootLayout() {
     <SafeAreaView className="flex-1 bg-white dark:bg-black">
       <Slot />
       <NavFab />
+      <Toast />
       <StatusBar
         animated
         translucent={false}

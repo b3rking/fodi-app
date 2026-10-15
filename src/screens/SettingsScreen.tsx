@@ -6,6 +6,7 @@ import { useColorScheme } from 'nativewind';
 import { replayFills, totalLitres } from '../core/fuel/engine';
 import { formatLitres } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
+import { useToastStore } from '../store/toastStore';
 import { IconButton, PrimaryButton } from '../components/buttons';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
 import { fr } from '../i18n/fr';
@@ -15,6 +16,7 @@ export function SettingsScreen() {
   const capL = useFuelStore((s) => s.capL);
   const fills = useFuelStore((s) => s.fills);
   const setCapL = useFuelStore((s) => s.setCapL);
+  const showToast = useToastStore((s) => s.show);
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -63,8 +65,8 @@ export function SettingsScreen() {
     void setCapL(parsed).then(
       () => {
         setSaving(false);
-        setMessage(fr.settings.saved);
         setIsError(false);
+        showToast(fr.toast.settingsSaved);
       },
       (e: unknown) => {
         setSaving(false);

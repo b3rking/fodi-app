@@ -15,6 +15,7 @@ import { useColorScheme } from 'nativewind';
 import { fr } from '../i18n/fr';
 import { FuelFormSheet } from './FuelFormSheet';
 import { PrimaryButton } from '../components/buttons';
+import { useToastStore } from '../store/toastStore';
 
 const RESERVE_L = 7;
 
@@ -23,6 +24,8 @@ export function FuelScreen() {
   const capL = useFuelStore((s) => s.capL);
   const lastLitresAfterL = useFuelStore((s) => s.lastLitresAfterL);
   const removeFill = useFuelStore((s) => s.removeFill);
+  const restoreFill = useFuelStore((s) => s.restoreFill);
+  const showToast = useToastStore((s) => s.show);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { colorScheme } = useColorScheme();
   const palette = colorScheme === 'dark' ? darkPalette : lightPalette;
@@ -33,7 +36,15 @@ export function FuelScreen() {
       {
         text: fr.fuel.deleteConfirm,
         style: 'destructive',
-        onPress: () => void removeFill(id),
+        onPress: () => {
+          void removeFill(id).then((snapshot) => {
+            if (!snapshot) return;
+            showToast(fr.toast.fillDeleted, {
+              label: fr.toast.undo,
+              onPress: () => void restoreFill(snapshot),
+            });
+          });
+        },
       },
     ]);
   };

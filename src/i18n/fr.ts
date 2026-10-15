@@ -69,6 +69,14 @@ export const fr = {
     settings: 'Paramètres',
   },
 
+  toast: {
+    fillSaved: 'Plein enregistré.',
+    fillDeleted: 'Plein supprimé.',
+    settingsSaved: 'Réglage enregistré.',
+    undo: 'Annuler',
+    dismiss: 'Fermer la notification',
+  },
+
   settings: {
     title: 'Paramètres',
     back: 'Retour',
