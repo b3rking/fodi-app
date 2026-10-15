@@ -4,6 +4,8 @@ export const fr = {
   tagline: 'Votre compagnon carburant, simple et malin.',
   themeTitle: 'Apparence',
   themeDescription: 'Choisissez le thème de l’interface.',
+  accentTitle: 'Couleur d’accent',
+  accentHint: 'Appliquée aux boutons, jauges et sélections dans toute l’app.',
   themeOptions: {
     system: 'Système',
     light: 'Clair',

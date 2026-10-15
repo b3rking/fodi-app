@@ -1,11 +1,15 @@
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, ChevronRight, Fuel } from 'lucide-react-native';
+import { ArrowLeft, Check, ChevronRight, Fuel } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import { useThemeStore } from '../store/themeStore';
+import { useToastStore } from '../store/toastStore';
 import { IconButton } from '../components/buttons';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
 import { fr } from '../i18n/fr';
+
+const ACCENT_PRESETS = ['#FF9800', '#FF5722', '#2E7D32', '#1E88E5', '#8E24AA', '#E53935'];
 
 /** Paramètres : menu des modules (un écran de réglages par module). */
 export function SettingsScreen() {
@@ -51,7 +55,49 @@ export function SettingsScreen() {
           {fr.themeDescription}
         </Text>
         <ThemeSwitcher />
+        <Text className="font-500 mt-2 text-base text-black dark:text-white">
+          {fr.accentTitle}
+        </Text>
+        <Text className="font-400 text-sm text-neutral-600 dark:text-neutral-300">
+          {fr.accentHint}
+        </Text>
+        <AccentPicker />
       </View>
     </ScrollView>
+  );
+}
+
+function AccentPicker() {
+  const accent = useThemeStore((s) => s.accent);
+  const setAccent = useThemeStore((s) => s.setAccent);
+  const showToast = useToastStore((s) => s.show);
+
+  const apply = (color: string) => {
+    void setAccent(color).then(() => showToast(fr.toast.settingsSaved));
+  };
+
+  return (
+    <View className="flex-row gap-2">
+      {ACCENT_PRESETS.map((color) => {
+        const selected = accent.toUpperCase() === color;
+        return (
+          <Pressable
+            key={color}
+            accessibilityRole="button"
+            accessibilityLabel={color}
+            accessibilityState={{ selected }}
+            onPress={() => apply(color)}
+            className="h-10 flex-1 items-center justify-center rounded-full"
+            style={{
+              backgroundColor: color,
+              borderWidth: selected ? 3 : 0,
+              borderColor: '#FFFFFF',
+            }}
+          >
+            {selected ? <Check size={18} color="#FFFFFF" /> : null}
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }

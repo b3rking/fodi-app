@@ -4,11 +4,11 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { replayFills, totalLitres, validateTankLevels, type LevelLabelStyle, type TankLevelDef } from '../core/fuel/engine';
-import { brandAction } from '../core/theme';
 import type { FuelGaugeStyle } from '../db/database';
 import { formatLitres } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
 import { useToastStore } from '../store/toastStore';
+import { useThemeStore } from '../store/themeStore';
 import { IconButton, PrimaryButton } from '../components/buttons';
 import { LevelsEditor } from '../components/LevelsEditor';
 import { fr } from '../i18n/fr';
@@ -193,6 +193,7 @@ function OptionPicker<T extends string>({
   onPick: (v: T) => void;
   labels: Record<T, string>;
 }) {
+  const accent = useThemeStore((s) => s.accent);
   return (
     <View className="flex-row gap-2">
       {options.map((option) => {
@@ -210,7 +211,7 @@ function OptionPicker<T extends string>({
                 ? 'flex-1 items-center rounded-xl px-2 py-2'
                 : 'flex-1 items-center rounded-xl bg-neutral-200 px-2 py-2 dark:bg-neutral-700'
             }
-            style={selected ? { backgroundColor: brandAction } : undefined}
+            style={selected ? { backgroundColor: accent } : undefined}
           >
             <Text
               className={

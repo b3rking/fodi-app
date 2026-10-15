@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
-import { brandAction } from '../core/theme';
+import { useThemeStore } from '../store/themeStore';
 import { formatCurrentLevel, type LevelLabelStyle, type TankLevelDef } from '../core/fuel/engine';
 
 interface GaugeProps {
@@ -20,6 +20,7 @@ interface GaugeProps {
  */
 export function BarsGauge({ levels, fraction, trackColor, labelStyle }: GaugeProps) {
   const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
+  const accent = useThemeStore((s) => s.accent);
   return (
     <View>
       <Text className="font-700 text-2xl text-black dark:text-white">
@@ -32,7 +33,7 @@ export function BarsGauge({ levels, fraction, trackColor, labelStyle }: GaugePro
             <View
               key={level.id}
               style={{
-                backgroundColor: on ? brandAction : trackColor,
+                backgroundColor: on ? accent : trackColor,
                 borderRadius: 9999,
                 width: `${(100 / sorted.length) * 0.7}%`,
               }}
@@ -60,6 +61,7 @@ function dialPoint(fraction: number, radius: number): [number, number] {
  */
 export function NeedleGauge({ levels, fraction, trackColor, labelStyle }: GaugeProps) {
   const sorted = [...levels].sort((a, b) => a.fraction - b.fraction);
+  const accent = useThemeStore((s) => s.accent);
   const [nx, ny] = dialPoint(fraction, DIAL_R - 22);
   const [ax, ay] = dialPoint(0, DIAL_R);
   const [bx, by] = dialPoint(1, DIAL_R);
@@ -97,11 +99,11 @@ export function NeedleGauge({ levels, fraction, trackColor, labelStyle }: GaugeP
           y1={DIAL_CY}
           x2={nx}
           y2={ny}
-          stroke={brandAction}
+          stroke={accent}
           strokeWidth={5}
           strokeLinecap="round"
         />
-        <Circle cx={DIAL_CX} cy={DIAL_CY} r={7} fill={brandAction} />
+        <Circle cx={DIAL_CX} cy={DIAL_CY} r={7} fill={accent} />
       </Svg>
     </View>
   );

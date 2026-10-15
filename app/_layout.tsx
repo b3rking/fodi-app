@@ -27,6 +27,7 @@ export default function RootLayout() {
   });
 
   const mode = useThemeStore((s) => s.mode);
+  const loadAccent = useThemeStore((s) => s.loadAccent);
   const { colorScheme, setColorScheme } = useColorScheme();
   const fuelReady = useFuelStore((s) => s.ready);
   const loadFuel = useFuelStore((s) => s.load);
@@ -55,7 +56,8 @@ export default function RootLayout() {
     void loadFuel();
     void loadTrips();
     void loadMoney();
-  }, [loadFuel, loadTrips, loadMoney]);
+    void loadAccent();
+  }, [loadFuel, loadTrips, loadMoney, loadAccent]);
 
   if (!fontsLoaded || !fuelReady || !tripsReady || !moneyReady) {
     return (

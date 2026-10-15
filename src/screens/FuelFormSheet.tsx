@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { litresFromFraction, formatCurrentLevel, formatLevelLabel, replayLiveTank, totalLitres, type LevelLabelStyle, type TankLevelDef } from '../core/fuel/engine';
-import { brandAction } from '../core/theme';
 import { formatFBu, formatLitres, formatPricePerLitre } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
 import { useTripsStore } from '../store/tripsStore';
+import { useThemeStore } from '../store/themeStore';
 import { useToastStore } from '../store/toastStore';
 import { PrimaryButton, SecondaryButton } from '../components/buttons';
 import { fr } from '../i18n/fr';
@@ -242,6 +242,7 @@ function LevelButtons({
   value: string;
   onPick: (id: string) => void;
 }) {
+  const accent = useThemeStore((s) => s.accent);
   return (
     <View className="flex-row flex-wrap gap-2">
       {levels.map((level) => {
@@ -260,7 +261,7 @@ function LevelButtons({
                 ? 'items-center rounded-xl px-3 py-2'
                 : 'items-center rounded-xl bg-neutral-200 px-3 py-2 dark:bg-neutral-700'
             }
-            style={[selected ? { backgroundColor: brandAction } : undefined, { flexGrow: 1 }]}
+            style={[selected ? { backgroundColor: accent } : undefined, { flexGrow: 1 }]}
           >
             <Text
               className={

@@ -213,8 +213,7 @@ export async function setFuelGauge(style: FuelGaugeStyle): Promise<void> {
 }
 
 /** Format des libellés de niveaux : fractions ou pourcentages (défaut : fractions). */
-export async function getLevelFormat(): Promise<LevelLabelStyle> {
-  const database = await getDb();
+export async function getLevelFormat(): Promise<LevelLabelStyle> {  const database = await getDb();
   const row = await database.getFirstAsync<{ value: string }>(
     'SELECT value FROM settings WHERE key = ?',
     'levelFormat',
@@ -231,6 +230,35 @@ export async function setLevelFormat(style: LevelLabelStyle): Promise<void> {
     'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
     'levelFormat',
     style,
+  );
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}
+
+export const DEFAULT_ACCENT = '#FF9800';
+
+export function isAccentColor(value: unknown): value is string {
+  return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+/** Couleur d'accent choisie (défaut : jaune de marque). */
+export async function getAccentColor(): Promise<string> {
+  const database = await getDb();
+  const row = await database.getFirstAsync<{ value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
+    'accentColor',
+  );
+  return row && isAccentColor(row.value) ? row.value : DEFAULT_ACCENT;
+}
+
+export async function setAccentColor(color: string): Promise<void> {
+  if (!isAccentColor(color)) {
+    throw new Error('Code couleur invalide (ex. #FF9800).');
+  }
+  const database = await getDb();
+  await database.runAsync(
+    'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+    'accentColor',
+    color.toUpperCase(),
   );
   await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
 }

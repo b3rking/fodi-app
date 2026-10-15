@@ -4,6 +4,7 @@ import { useColorScheme } from 'nativewind';
 import { formatDayFr, formatFBu } from '../core/format';
 import { useMoneyStore } from '../store/moneyStore';
 import { useToastStore } from '../store/toastStore';
+import { useThemeStore } from '../store/themeStore';
 import { PrimaryButton, SecondaryButton } from '../components/buttons';
 import type { RecurringRow } from '../db/database';
 import { fr } from '../i18n/fr';
@@ -40,6 +41,7 @@ export function RecurringSheet({ state, onClose }: { state: RecurringSheetState;
   const editRecurring = useMoneyStore((s) => s.editRecurring);
   const removeRecurring = useMoneyStore((s) => s.removeRecurring);
   const showToast = useToastStore((s) => s.show);
+  const accent = useThemeStore((s) => s.accent);
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const placeholder = isDark ? '#737373' : '#A3A3A3';
@@ -168,7 +170,7 @@ export function RecurringSheet({ state, onClose }: { state: RecurringSheetState;
                           ? 'flex-1 items-center rounded-xl px-2 py-2'
                           : 'flex-1 items-center rounded-xl bg-neutral-200 px-2 py-2 dark:bg-neutral-700'
                       }
-                      style={selected ? { backgroundColor: '#FF9800' } : undefined}
+                      style={selected ? { backgroundColor: accent } : undefined}
                     >
                       <Text
                         className={
@@ -212,7 +214,7 @@ export function RecurringSheet({ state, onClose }: { state: RecurringSheetState;
                           ? 'rounded-full px-3 py-1'
                           : 'rounded-full bg-neutral-200 px-3 py-1 dark:bg-neutral-700'
                       }
-                      style={selected ? { backgroundColor: '#FF9800' } : undefined}
+                      style={selected ? { backgroundColor: accent } : undefined}
                     >
                       <Text
                         className={selected ? 'font-500 text-sm text-white' : 'font-400 text-sm text-black dark:text-white'}

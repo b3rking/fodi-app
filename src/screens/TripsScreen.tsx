@@ -6,6 +6,7 @@ import { blendedPrice, replayFills } from '../core/fuel/engine';
 import { formatDayFr, formatFBu, formatKm, formatLitres } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
 import { useTripsStore } from '../store/tripsStore';
+import { useThemeStore } from '../store/themeStore';
 import { fr } from '../i18n/fr';
 import { PrimaryButton } from '../components/buttons';
 import { TripSheet, type TripSheetState } from './TripSheet';
@@ -40,6 +41,7 @@ export function TripsScreen() {
   const capL = useFuelStore((s) => s.capL);
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const accent = useThemeStore((s) => s.accent);
   const [filter, setFilter] = useState<Filter>('today');
   const [query, setQuery] = useState('');
   const [sheet, setSheet] = useState<TripSheetState>({ mode: 'closed' });
@@ -157,7 +159,7 @@ export function TripsScreen() {
                     ? 'flex-1 items-center rounded-full px-2 py-2'
                     : 'flex-1 items-center rounded-full bg-neutral-200 px-2 py-2 dark:bg-neutral-700'
                 }
-                style={selected ? { backgroundColor: '#FF9800' } : undefined}
+                style={selected ? { backgroundColor: accent } : undefined}
               >
                 <Text
                   className={

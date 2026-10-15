@@ -7,7 +7,7 @@ import { formatDayFr, formatFBu } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
 import { useTripsStore } from '../store/tripsStore';
 import { useMoneyStore } from '../store/moneyStore';
-import { brandAction } from '../core/theme';
+import { useThemeStore } from '../store/themeStore';
 import { fr } from '../i18n/fr';
 import { MoneySheet, type MoneySheetState } from './MoneySheet';
 import { RecurringSheet, type RecurringSheetState } from './RecurringSheet';
@@ -40,6 +40,7 @@ export function MoneyScreen() {
   const trips = useTripsStore((s) => s.trips);
   const { colorScheme } = useColorScheme();
   const iconColor = colorScheme === 'dark' ? '#FFFFFF' : '#000000';
+  const accent = useThemeStore((s) => s.accent);
 
   const [sheet, setSheet] = useState<MoneySheetState>({ mode: 'closed' });
   const [ruleSheet, setRuleSheet] = useState<RecurringSheetState>({ mode: 'closed' });
@@ -191,7 +192,7 @@ export function MoneyScreen() {
               accessibilityLabel={fr.money.addCost}
               onPress={() => setSheet({ mode: 'cost' })}
               className="flex-row items-center justify-center gap-1 rounded-full px-4 py-3"
-              style={{ backgroundColor: brandAction }}
+              style={{ backgroundColor: accent }}
             >
               <Plus size={18} color="#FFFFFF" />
               <Text className="font-500 text-base text-white">{fr.money.addCost}</Text>
@@ -203,7 +204,7 @@ export function MoneyScreen() {
               accessibilityLabel={fr.money.addIncome}
               onPress={() => setSheet({ mode: 'income' })}
               className="flex-row items-center justify-center gap-1 rounded-full px-4 py-3"
-              style={{ backgroundColor: brandAction }}
+              style={{ backgroundColor: accent }}
             >
               <Plus size={18} color="#FFFFFF" />
               <Text className="font-500 text-base text-white">{fr.money.addIncome}</Text>
@@ -243,7 +244,7 @@ export function MoneyScreen() {
                       width: `${Math.min(100, (line.total / maxCost) * 100)}%`,
                       height: '100%',
                       borderRadius: 999,
-                      backgroundColor: brandAction,
+                      backgroundColor: accent,
                     }}
                   />
                 </View>
@@ -333,7 +334,7 @@ export function MoneyScreen() {
             accessibilityLabel={fr.money.addRule}
             onPress={() => setRuleSheet({ mode: 'create' })}
             className="flex-row items-center gap-1 rounded-full px-3 py-2"
-            style={{ backgroundColor: brandAction }}
+            style={{ backgroundColor: accent }}
           >
             <Plus size={16} color="#FFFFFF" />
             <Text className="font-500 text-sm text-white">{fr.money.addRule}</Text>

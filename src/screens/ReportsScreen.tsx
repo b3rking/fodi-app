@@ -12,8 +12,8 @@ import { useFuelStore } from '../store/fuelStore';
 import { useTripsStore } from '../store/tripsStore';
 import { useMoneyStore } from '../store/moneyStore';
 import { useToastStore } from '../store/toastStore';
-import { brandAction } from '../core/theme';
 import { PrimaryButton } from '../components/buttons';
+import { useThemeStore } from '../store/themeStore';
 import { fr } from '../i18n/fr';
 
 type Preset = 'week' | 'month' | 'year' | 'custom';
@@ -56,6 +56,7 @@ export function ReportsScreen() {
   const trips = useTripsStore((s) => s.trips);
   const recurrings = useMoneyStore((s) => s.recurrings);
   const showToast = useToastStore((s) => s.show);
+  const accent = useThemeStore((s) => s.accent);
 
   const [preset, setPreset] = useState<Preset>('month');
   const [startStr, setStartStr] = useState(toDayInput(Date.now() - 30 * 86400000));
@@ -310,7 +311,7 @@ export function ReportsScreen() {
                     ? 'flex-1 items-center rounded-xl px-2 py-2'
                     : 'flex-1 items-center rounded-xl bg-neutral-200 px-2 py-2 dark:bg-neutral-700'
                 }
-                style={selected ? { backgroundColor: '#FF9800' } : undefined}
+                style={selected ? { backgroundColor: accent } : undefined}
               >
                 <Text
                   className={
@@ -479,6 +480,7 @@ function ReportLine({ label, value }: { label: string; value: string }) {
 }
 
 function WhereRow({ label, value, max }: { label: string; value: number; max: number }) {
+  const accent = useThemeStore((s) => s.accent);
   return (
     <View style={{ gap: 4 }}>
       <View className="flex-row items-center justify-between">
@@ -491,7 +493,7 @@ function WhereRow({ label, value, max }: { label: string; value: number; max: nu
             width: `${Math.min(100, (value / max) * 100)}%`,
             height: '100%',
             borderRadius: 999,
-            backgroundColor: brandAction,
+            backgroundColor: accent,
           }}
         />
       </View>

@@ -5,7 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { brandAction } from '../core/theme';
+import { useThemeStore } from '../store/themeStore';
 
 /** Écrasement au toucher partagé par tous les boutons (retour tactile). */
 function usePressScale() {
@@ -42,6 +42,7 @@ export function PrimaryButton({
   icon,
 }: BaseProps & { loading?: boolean; icon?: ReactNode }) {
   const press = usePressScale();
+  const accent = useThemeStore((s) => s.accent);
   return (
     <Animated.View style={[press.style, { flex: 1, opacity: disabled ? 0.7 : 1 }]}>
       <Pressable
@@ -53,7 +54,7 @@ export function PrimaryButton({
         onPressOut={press.onPressOut}
         disabled={disabled}
         className="flex-row items-center justify-center gap-2 rounded-full px-4 py-3"
-        style={{ backgroundColor: brandAction }}
+        style={{ backgroundColor: accent }}
       >
         {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : icon}
         <Text className="font-500 text-base text-white">{label}</Text>

@@ -14,7 +14,7 @@ import {
   formatPricePerLitre,
 } from '../core/format';
 import { useFuelStore } from '../store/fuelStore';
-import { brandAction, darkPalette, lightPalette } from '../core/theme';
+import { darkPalette, lightPalette } from '../core/theme';
 import { useColorScheme } from 'nativewind';
 import { fr } from '../i18n/fr';
 import { FuelFormSheet } from './FuelFormSheet';
@@ -23,6 +23,7 @@ import { BarsGauge, NeedleGauge } from '../components/FuelGauges';
 import { useToastStore } from '../store/toastStore';
 import { useTripsStore } from '../store/tripsStore';
 import { useMoneyStore } from '../store/moneyStore';
+import { useThemeStore } from '../store/themeStore';
 
 const RESERVE_L = 7;
 
@@ -40,6 +41,7 @@ export function FuelScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const { colorScheme } = useColorScheme();
   const palette = colorScheme === 'dark' ? darkPalette : lightPalette;
+  const accent = useThemeStore((s) => s.accent);
 
   const confirmDelete = (id: number, detail: string) => {
     Alert.alert(fr.fuel.deleteTitle, detail, [
@@ -251,7 +253,7 @@ export function FuelScreen() {
                         width: `${gaugePct}%`,
                         height: '100%',
                         borderRadius: 999,
-                        backgroundColor: brandAction,
+                        backgroundColor: accent,
                       }}
                     />
                   </View>
@@ -341,7 +343,7 @@ export function FuelScreen() {
                           width: `${Math.min(100, lastCycle.recoveryPct)}%`,
                           height: '100%',
                           borderRadius: 999,
-                          backgroundColor: brandAction,
+                          backgroundColor: accent,
                         }}
                       />
                     </View>
@@ -366,7 +368,7 @@ export function FuelScreen() {
                           width: `${Math.min(100, (v / historyMax) * 100)}%`,
                           height: '100%',
                           borderRadius: 999,
-                          backgroundColor: brandAction,
+                          backgroundColor: accent,
                         }}
                       />
                     </View>

@@ -10,7 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Gauge, BarChart3, Menu, Route, Settings, Wallet, X } from 'lucide-react-native';
-import { brandAction } from '../core/theme';
+import { useThemeStore } from '../store/themeStore';
 import { fr } from '../i18n/fr';
 
 type Href = '/' | '/trips' | '/money' | '/reports' | '/settings';
@@ -34,6 +34,7 @@ export function NavFab() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const accent = useThemeStore((s) => s.accent);
   const spin = useSharedValue(0);
 
   const spinStyle = useAnimatedStyle(() => ({
@@ -92,7 +93,7 @@ export function NavFab() {
                   </Text>
                   <View
                     className="items-center justify-center rounded-full p-3"
-                    style={{ backgroundColor: active ? brandAction : '#525252' }}
+                    style={{ backgroundColor: active ? accent : '#525252' }}
                   >
                     <Icon size={22} color="#FFFFFF" />
                   </View>
@@ -108,7 +109,7 @@ export function NavFab() {
         accessibilityLabel={open ? fr.nav.closeMenu : fr.nav.openMenu}
         onPress={toggle}
         className="absolute bottom-6 right-6 items-center justify-center rounded-full p-4"
-        style={{ backgroundColor: brandAction, elevation: 8 }}
+        style={{ backgroundColor: accent, elevation: 8 }}
       >
         <Animated.View style={spinStyle}>
           {open ? <X size={24} color="#FFFFFF" /> : <Menu size={24} color="#FFFFFF" />}

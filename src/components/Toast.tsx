@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
-import { brandAction } from '../core/theme';
 import { useToastStore } from '../store/toastStore';
+import { useThemeStore } from '../store/themeStore';
 import { fr } from '../i18n/fr';
 
 const VISIBLE_MS = 3000;
@@ -14,6 +14,7 @@ const VISIBLE_MS = 3000;
 export function Toast() {
   const toast = useToastStore((s) => s.toast);
   const dismiss = useToastStore((s) => s.dismiss);
+  const accent = useThemeStore((s) => s.accent);
 
   useEffect(() => {
     if (!toast) return;
@@ -44,7 +45,7 @@ export function Toast() {
                 dismiss();
               }}
               className="rounded-full px-3 py-1"
-              style={{ backgroundColor: brandAction }}
+              style={{ backgroundColor: accent }}
             >
               <Text className="font-500 text-sm text-white">{toast.action.label}</Text>
             </Pressable>
