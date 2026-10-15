@@ -1,14 +1,15 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Monitor, Moon, Sun } from 'lucide-react-native';
+import { useColorScheme } from 'nativewind';
 import { themeModes, themeModeLabels, type ThemeMode } from '../core/theme';
 import { useThemeStore } from '../store/themeStore';
 
-const icons: Record<ThemeMode, React.ReactNode> = {
-  system: <Monitor size={18} />,
-  light: <Sun size={18} />,
-  dark: <Moon size={18} />,
-};
+const icons = {
+  system: Monitor,
+  light: Sun,
+  dark: Moon,
+} as const;
 
 /**
  * Sélecteur d'apparence à trois positions : Système / Clair / Sombre.
@@ -17,6 +18,9 @@ const icons: Record<ThemeMode, React.ReactNode> = {
 export function ThemeSwitcher() {
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
+  const { colorScheme } = useColorScheme();
+  // Les icônes Lucide ignorent la couleur du texte parent : couleur explicite.
+  const iconColor = colorScheme === 'dark' ? '#FFFFFF' : '#000000';
 
   return (
     <View
@@ -26,6 +30,7 @@ export function ThemeSwitcher() {
     >
       {themeModes.map((option) => {
         const selected = option === mode;
+        const Icon = icons[option];
         return (
           <Pressable
             // La sélection ajoute/retire des variantes `dark:` après le montage.
@@ -39,17 +44,19 @@ export function ThemeSwitcher() {
             accessibilityLabel={`Thème ${themeModeLabels[option]}`}
             accessibilityHint="Appliquer ce thème à l’interface"
             onPress={() => setMode(option)}
-            className={`flex-1 flex-row items-center justify-center gap-1 rounded-full px-3 py-2 ${
-              selected ? 'bg-white shadow dark:bg-black' : ''
-            }`}
+            className={
+              selected
+                ? 'flex-1 flex-row items-center justify-center gap-1 rounded-full bg-white px-3 py-2 text-black shadow dark:bg-black dark:text-white'
+                : 'flex-1 flex-row items-center justify-center gap-1 rounded-full px-3 py-2 text-neutral-500 dark:text-neutral-400'
+            }
           >
-            {icons[option]}
+            <Icon size={18} color={selected ? iconColor : '#737373'} />
             <Text
-              className={`font-500 text-sm ${
+              className={
                 selected
-                  ? 'text-black dark:text-white'
-                  : 'text-neutral-500 dark:text-neutral-400'
-              }`}
+                  ? 'font-500 text-sm text-black dark:text-white'
+                  : 'font-500 text-sm text-neutral-500 dark:text-neutral-400'
+              }
             >
               {themeModeLabels[option]}
             </Text>

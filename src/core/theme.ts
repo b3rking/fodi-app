@@ -21,9 +21,15 @@ export const darkPalette = {
   disabled: '#616161',
 };
 
+/**
+ * Jaune d'action de la marque, identique en clair et en sombre
+ * (boutons d'action, jauge). Les accents des palettes varient eux
+ * selon le thème et ne doivent pas servir aux boutons.
+ */
+export const brandAction = '#FF9800';
+
 /** Libellés français des modes de thème. */
-export const themeModeLabels: Record<ThemeMode, string> = {
-  system: 'Système',
+export const themeModeLabels: Record<ThemeMode, string> = {  system: 'Système',
   light: 'Clair',
   dark: 'Sombre',
 };

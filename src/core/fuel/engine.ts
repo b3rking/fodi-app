@@ -1,0 +1,254 @@
+/**
+ * Moteur carburant — fonctions pures, sans React ni SQLite.
+ *
+ * Le réservoir est une file FIFO de couches de prix : chaque plein ajoute une
+ * couche { litres, prix au litre }, et la consommation brûle toujours le
+ * carburant le plus ancien d'abord. Les frais éventuels (service, Oraison…)
+ * sont fondus dans le prix effectif de la couche, pour que le FIFO reste exact.
+ */
+
+export interface FillLayer {
+  litres: number;
+  /** Prix effectif au litre (frais inclus). `null` = litres d'ouverture au prix inconnu. */
+  pricePerLitre: number | null;
+}
+
+export interface TankState {
+  capacityL: number;
+  layers: FillLayer[];
+}
+
+export type TankLevel = 'empty' | 'quarter' | 'half' | 'threeQuarter' | 'full';
+
+/** Fraction du réservoir pour chaque niveau (boutons Vide · ¼ · ½ · ¾ · Plein). */
+export const tankLevelFractions: Record<TankLevel, number> = {
+  empty: 0,
+  quarter: 0.25,
+  half: 0.5,
+  threeQuarter: 0.75,
+  full: 1,
+};
+
+export function litresFromLevel(level: TankLevel, capacityL: number): number {
+  return tankLevelFractions[level] * capacityL;
+}
+
+export function createEmptyTank(capacityL: number): TankState {
+  if (!Number.isFinite(capacityL) || capacityL <= 0) {
+    throw new FuelError('INVALID_CAPACITY', 'La capacité du réservoir doit être positive.');
+  }
+  return { capacityL, layers: [] };
+}
+
+export function totalLitres(tank: TankState): number {
+  return tank.layers.reduce((sum, l) => sum + l.litres, 0);
+}
+
+/** Coût du carburant non brûlé (argent immobilisé dans le réservoir). */
+export function tankCost(tank: TankState): number {
+  return tank.layers.reduce((sum, l) => sum + l.litres * (l.pricePerLitre ?? 0), 0);
+}
+
+/**
+ * Prix mixte (blended) du litre actuellement brûlé : C / L.
+ * `null` si le réservoir est vide ou si son coût est inconnu (couches d'ouverture
+ * au prix inconnu) — on affiche « — » plutôt qu'un mensonge.
+ */
+export function blendedPrice(tank: TankState): number | null {
+  const litres = totalLitres(tank);
+  if (litres <= 0) return null;
+  const cost = tankCost(tank);
+  if (cost <= 0) return null;
+  return cost / litres;
+}
+
+/** Litres que l'on peut encore ajouter sans déborder. */
+export function maxFillable(tank: TankState): number {
+  return Math.max(0, tank.capacityL - totalLitres(tank));
+}
+
+export interface RefillInput {
+  volumeL: number;
+  pricePerLitre: number;
+  /** Frais fixes fondus dans le coût (service, etc.). */
+  feeFBu?: number;
+}
+
+/**
+ * Ajoute un plein. Ne modifie pas l'état reçu (immuable).
+ * Lève OVERFLOW si ça déborde — l'UI affiche le maximum exact via `maxFillable`.
+ */
+export function refill(tank: TankState, input: RefillInput): TankState {
+  const { volumeL, pricePerLitre, feeFBu = 0 } = input;
+  if (!Number.isFinite(volumeL) || volumeL <= 0) {
+    throw new FuelError('INVALID_VOLUME', 'Le volume doit être strictement positif.');
+  }
+  if (!Number.isFinite(pricePerLitre) || pricePerLitre <= 0) {
+    throw new FuelError('INVALID_PRICE', 'Le prix au litre doit être strictement positif.');
+  }
+  if (!Number.isFinite(feeFBu) || feeFBu < 0) {
+    throw new FuelError('INVALID_FEE', 'Les frais ne peuvent pas être négatifs.');
+  }
+  const free = maxFillable(tank);
+  if (volumeL - free > 1e-9) {
+    throw new FuelError(
+      'OVERFLOW',
+      `Ça déborde : ${free.toFixed(1)} L maximum.`,
+      { maxLitres: free },
+    );
+  }
+  const effectivePrice = (volumeL * pricePerLitre + feeFBu) / volumeL;
+  return {
+    capacityL: tank.capacityL,
+    layers: [...tank.layers, { litres: volumeL, pricePerLitre: effectivePrice }],
+  };
+}
+
+export interface ConsumeResult {
+  tank: TankState;
+  /** Litres réellement déduits (plafonnés au contenu). */
+  consumedL: number;
+  /** Coût FIFO du carburant brûlé. */
+  costFBu: number;
+}
+
+/** Brûle du carburant en FIFO. Ne modifie pas l'état reçu (immuable). */
+export function consume(tank: TankState, litres: number): ConsumeResult {
+  if (!Number.isFinite(litres) || litres < 0) {
+    throw new FuelError('INVALID_VOLUME', 'La consommation ne peut pas être négative.');
+  }
+  const available = totalLitres(tank);
+  let remaining = Math.min(litres, available);
+  const consumedL = remaining;
+  let costFBu = 0;
+  const layers: FillLayer[] = tank.layers
+    .map((l) => ({ ...l }))
+    .filter((l) => l.litres > 0);
+  while (remaining > 1e-9 && layers.length > 0) {
+    const head = layers[0];
+    const take = Math.min(head.litres, remaining);
+    costFBu += take * (head.pricePerLitre ?? 0);
+    head.litres -= take;
+    remaining -= take;
+    if (head.litres <= 1e-9) layers.shift();
+  }
+  return {
+    tank: { capacityL: tank.capacityL, layers: layers.filter((l) => l.litres > 1e-9) },
+    consumedL,
+    costFBu,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Rejeu de l'historique des pleins
+// ---------------------------------------------------------------------------
+
+export interface FillEvent {
+  volumeL: number;
+  pricePerLitre: number;
+  feeFBu?: number;
+  /** Litres présents juste avant ce plein (photo précédente ou niveau d'ouverture). */
+  litresBeforeL: number;
+  /** Litres relevés juste après ce plein (boutons de niveau). */
+  litresAfterL: number;
+  odometerKm?: number | null;
+}
+
+export interface BurnInterval {
+  /** Carburant brûlé entre la photo précédente et ce plein (FIFO). */
+  consumedL: number;
+  costFBu: number;
+  km: number | null;
+  /** km/L sur l'intervalle, `null` si incalculable (données manquantes). */
+  kmPerLitre: number | null;
+}
+
+export interface TankReplay {
+  tank: TankState;
+  intervals: BurnInterval[];
+  totalConsumedL: number;
+  totalBurnCostFBu: number;
+  totalKm: number | null;
+  overallKmPerLitre: number | null;
+}
+
+/**
+ * Rejoue les pleins dans l'ordre chronologique et reconstruit le réservoir :
+ * pour chaque plein, on brûle d'abord (FIFO) ce qui a disparu depuis la photo
+ * précédente, puis on empile la nouvelle couche.
+ */
+export function replayFills(capacityL: number, fills: FillEvent[]): TankReplay {
+  let tank = createEmptyTank(capacityL);
+  const intervals: BurnInterval[] = [];
+  let totalConsumedL = 0;
+  let totalBurnCostFBu = 0;
+  let totalKm = 0;
+  let hasKm = false;
+  let prevOdo: number | null = null;
+
+  fills.forEach((fill, index) => {
+    if (index === 0 && fill.litresBeforeL > 1e-9) {
+      // Fond de réservoir préexistant, prix inconnu : couche sans prix.
+      tank = { capacityL, layers: [openingBalance(fill.litresBeforeL)] };
+    }
+    const have = totalLitres(tank);
+    const before = Math.max(0, Math.min(fill.litresBeforeL, have));
+    const disappeared = Math.max(0, have - before);
+    const burned = consume(tank, disappeared);
+    tank = burned.tank;
+
+    const km =
+      fill.odometerKm != null && prevOdo != null && fill.odometerKm > prevOdo
+        ? fill.odometerKm - prevOdo
+        : null;
+    const kmPerLitre = km != null && burned.consumedL > 1e-9 ? km / burned.consumedL : null;
+
+    intervals.push({ consumedL: burned.consumedL, costFBu: burned.costFBu, km, kmPerLitre });
+    totalConsumedL += burned.consumedL;
+    totalBurnCostFBu += burned.costFBu;
+    if (km != null) {
+      totalKm += km;
+      hasKm = true;
+    }
+
+    tank = refill(tank, {
+      volumeL: fill.volumeL,
+      pricePerLitre: fill.pricePerLitre,
+      feeFBu: fill.feeFBu ?? 0,
+    });
+    if (fill.odometerKm != null) prevOdo = fill.odometerKm;
+  });
+
+  return {
+    tank,
+    intervals,
+    totalConsumedL,
+    totalBurnCostFBu,
+    totalKm: hasKm ? totalKm : null,
+    overallKmPerLitre: hasKm && totalConsumedL > 1e-9 ? totalKm / totalConsumedL : null,
+  };
+}
+
+/**
+ * Litres d'ouverture au prix inconnu (premier plein : le fond de réservoir
+ * existait déjà). On l'ajoute comme couche sans prix plutôt que d'inventer.
+ */
+export function openingBalance(litres: number): FillLayer {
+  return { litres: Math.max(0, litres), pricePerLitre: null };
+}
+
+export class FuelError extends Error {
+  code: 'INVALID_CAPACITY' | 'INVALID_VOLUME' | 'INVALID_PRICE' | 'INVALID_FEE' | 'OVERFLOW';
+  details?: { maxLitres?: number };
+
+  constructor(
+    code: FuelError['code'],
+    message: string,
+    details?: { maxLitres?: number },
+  ) {
+    super(message);
+    this.name = 'FuelError';
+    this.code = code;
+    this.details = details;
+  }
+}
