@@ -787,3 +787,195 @@ const SEED_CATEGORIES: CategoryRow[] = [
   { id: 'bonus', kind: 'income', label: 'Prime' },
   { id: 'other-income', kind: 'income', label: 'Autre revenu' },
 ];
+
+// ---------------------------------------------------------------------------
+// Sauvegarde / restauration : export JSON complet + remplacement atomique.
+// Le PIN et son sel restent dans le stockage sécurisé : jamais exportés.
+// ---------------------------------------------------------------------------
+
+/** Réglages exportés (blancs-seings : seules ces clés voyagent). */
+export const BACKUP_SETTING_KEYS = [
+  'tankCapL',
+  'tankLevels',
+  'fuelGauge',
+  'levelFormat',
+  'accentColor',
+] as const;
+
+export type BackupSettingKey = (typeof BACKUP_SETTING_KEYS)[number];
+
+export interface BackupData {
+  fills: FillRow[];
+  trips: TripRow[];
+  categories: CategoryRow[];
+  expenses: ExpenseRow[];
+  incomes: IncomeRow[];
+  recurrings: RecurringRow[];
+  workdays: WorkdayRow[];
+  settings: { key: string; value: string }[];
+}
+
+/** Lit tous les réglages (pour filtrer ensuite les clés exportables). */
+export async function getAllSettings(): Promise<{ key: string; value: string }[]> {
+  const database = await getDb();
+  return database.getAllAsync<{ key: string; value: string }>(
+    'SELECT key, value FROM settings',
+  );
+}
+
+function isBackupSettingKey(key: string): key is BackupSettingKey {
+  return (BACKUP_SETTING_KEYS as readonly string[]).includes(key);
+}
+
+/** Vérifie une valeur de réglage avant import (invalide → ignorée). */
+async function validateSettingValue(key: BackupSettingKey, value: string): Promise<boolean> {
+  switch (key) {
+    case 'tankCapL': {
+      const n = Number(value);
+      return Number.isFinite(n) && n >= 5 && n <= 500;
+    }
+    case 'tankLevels': {
+      try {
+        return validateTankLevels(JSON.parse(value) as TankLevelDef[]) === null;
+      } catch {
+        return false;
+      }
+    }
+    case 'fuelGauge':
+      return isFuelGaugeStyle(value);
+    case 'levelFormat':
+      return value === 'fractions' || value === 'percent';
+    case 'accentColor':
+      return isAccentColor(value);
+  }
+}
+
+/**
+ * Remplace TOUT le contenu par les données de sauvegarde, en une transaction.
+ * Les lignes invalides lèvent une erreur et rien n'est appliqué.
+ */
+export async function importDatabase(data: BackupData): Promise<void> {
+  if (!data || !Array.isArray(data.fills) || !Array.isArray(data.trips)) {
+    throw new Error('Fichier de sauvegarde invalide.');
+  }
+  const database = await getDb();
+  await database.withTransactionAsync(async () => {
+    await database.execAsync(
+      'DELETE FROM fills; DELETE FROM trips; DELETE FROM expenses; ' +
+        'DELETE FROM incomes; DELETE FROM recurrings; DELETE FROM workdays; ' +
+        'DELETE FROM categories;',
+    );
+    for (const f of data.fills) {
+      await database.runAsync(
+        `INSERT INTO fills
+          (id, ts, station, volume_l, price_per_l, fee_fbu, odo_km, litres_before_l, litres_after_l)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        f.id,
+        f.ts,
+        f.station,
+        f.volumeL,
+        f.pricePerLitre,
+        f.feeFBu,
+        f.odoKm,
+        f.litresBeforeL,
+        f.litresAfterL,
+      );
+    }
+    for (const t of data.trips) {
+      await database.runAsync(
+        `INSERT INTO trips
+          (id, ts, from_place, to_place, km, fare, extras, odo_from_km, odo_to_km, fuel_l, note)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        t.id,
+        t.ts,
+        t.fromPlace ?? null,
+        t.toPlace,
+        t.km,
+        t.fare,
+        t.extras ?? 0,
+        t.odoFromKm ?? null,
+        t.odoToKm ?? null,
+        t.fuelL ?? null,
+        t.note ?? null,
+      );
+    }
+    for (const c of data.categories) {
+      if (c.kind !== 'cost' && c.kind !== 'income') throw new Error('Catégorie invalide.');
+      await database.runAsync(
+        'INSERT INTO categories (id, kind, label) VALUES (?, ?, ?)',
+        c.id,
+        c.kind,
+        c.label,
+      );
+    }
+    // Catégories personnalisées supprimées par erreur ? Les graines survivent.
+    for (const category of SEED_CATEGORIES) {
+      await database.runAsync(
+        'INSERT OR IGNORE INTO categories (id, kind, label) VALUES (?, ?, ?)',
+        category.id,
+        category.kind,
+        category.label,
+      );
+    }
+    for (const e of data.expenses) {
+      await database.runAsync(
+        'INSERT INTO expenses (id, ts, category_id, amount, vendor, note) VALUES (?, ?, ?, ?, ?, ?)',
+        e.id,
+        e.ts,
+        e.categoryId,
+        e.amount,
+        e.vendor ?? null,
+        e.note ?? null,
+      );
+    }
+    for (const i of data.incomes) {
+      await database.runAsync(
+        'INSERT INTO incomes (id, ts, category_id, amount, note) VALUES (?, ?, ?, ?, ?)',
+        i.id,
+        i.ts,
+        i.categoryId,
+        i.amount,
+        i.note ?? null,
+      );
+    }
+    for (const r of data.recurrings) {
+      if (r.cadence !== 'weekly' && r.cadence !== 'monthly') {
+        throw new Error('Récurrence invalide.');
+      }
+      await database.runAsync(
+        `INSERT INTO recurrings (id, label, amount, cadence, next_due, category_id, active)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        r.id,
+        r.label,
+        r.amount,
+        r.cadence,
+        r.nextDue,
+        r.categoryId,
+        r.active,
+      );
+    }
+    for (const w of data.workdays) {
+      await database.runAsync(
+        `INSERT INTO workdays (day, odo_start, odo_end, started_ts, ended_ts, fuel_start_l, fuel_end_l)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        w.day,
+        w.odoStart ?? null,
+        w.odoEnd ?? null,
+        w.startedTs ?? null,
+        w.endedTs ?? null,
+        w.fuelStartL ?? null,
+        w.fuelEndL ?? null,
+      );
+    }
+    for (const s of data.settings) {
+      if (!isBackupSettingKey(s.key)) continue;
+      if (!(await validateSettingValue(s.key, s.value))) continue;
+      await database.runAsync(
+        'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        s.key,
+        s.value,
+      );
+    }
+  });
+  await database.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+}

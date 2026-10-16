@@ -6,18 +6,21 @@ const PIN_SALT_KEY = 'app_pin_salt';
 const LOCK_ENABLED_KEY = 'lock_enabled';
 const DEFAULT_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
 const LOCK_TIMEOUT_KEY = 'lockTimeoutMs';
+export const MIN_LOCK_TIMEOUT_MS = 10_000;
+const MAX_LOCK_TIMEOUT_MS = 2 * 60 * 60 * 1000;
 
 export async function getLockTimeoutMs(): Promise<number> {
   const stored = await SecureStore.getItemAsync(LOCK_TIMEOUT_KEY);
   const parsed = stored ? Number(stored) : NaN;
-  return Number.isFinite(parsed) && parsed >= 10000 ? parsed : DEFAULT_LOCK_TIMEOUT_MS;
+  if (!Number.isFinite(parsed)) return DEFAULT_LOCK_TIMEOUT_MS;
+  return Math.min(MAX_LOCK_TIMEOUT_MS, Math.max(MIN_LOCK_TIMEOUT_MS, parsed));
 }
 
 export async function setLockTimeoutMs(ms: number): Promise<void> {
-  if (!Number.isFinite(ms) || ms < 10000) {
+  if (!Number.isFinite(ms) || ms < MIN_LOCK_TIMEOUT_MS) {
     throw new Error('Délai minimum : 10 secondes.');
   }
-  await SecureStore.setItemAsync(LOCK_TIMEOUT_KEY, String(ms));
+  await SecureStore.setItemAsync(LOCK_TIMEOUT_KEY, String(Math.min(MAX_LOCK_TIMEOUT_MS, Math.round(ms))));
 }
 
 async function sha256(text: string): Promise<string> {

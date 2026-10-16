@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { useThemeStore } from '../store/themeStore';
 import { fr } from '../i18n/fr';
-import { verifyPin, isLockEnabled, hasPinSet, setupPin, disableLock, enableLock, changePin } from '../core/lock';
+import { verifyPin, isLockEnabled, hasPinSet, setupPin, changePin } from '../core/lock';
 
 interface Props {
   onUnlock: () => void;
@@ -106,11 +106,6 @@ export function LockScreen({ onUnlock }: Props) {
     }
   };
 
-  const handleDisable = async () => {
-    await disableLock();
-    onUnlock();
-  };
-
   const isDark = colorScheme === 'dark';
 
   const title =
@@ -159,7 +154,7 @@ export function LockScreen({ onUnlock }: Props) {
       ) : null}
 
       <View className="w-full gap-4">
-        <PinInput value={pin} onChange={setPin} isDark={isDark} onComplete={onSubmit} />
+        <PinInput value={pin} onChange={setPin} isDark={isDark} accent={accent} onComplete={onSubmit} />
         {error ? <ErrorText message={error} /> : null}
         {submitLabel ? (
           <Pressable
@@ -173,19 +168,6 @@ export function LockScreen({ onUnlock }: Props) {
           </Pressable>
         ) : null}
       </View>
-
-      {mode === 'unlock' ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={fr.lock.disable}
-          onPress={handleDisable}
-          className="items-center"
-        >
-          <Text className="font-400 text-sm text-neutral-500 dark:text-neutral-400">
-            {fr.lock.disable}
-          </Text>
-        </Pressable>
-      ) : null}
     </View>
   );
 }
@@ -194,15 +176,18 @@ function PinInput({
   value,
   onChange,
   isDark,
+  accent,
   onComplete,
 }: {
   value: string;
   onChange: (v: string) => void;
   isDark: boolean;
+  accent: string;
   onComplete?: () => void;
 }) {
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
+  const inputRef = useRef<TextInput | null>(null);
 
   useEffect(() => {
     if (value.length === 4) {
@@ -212,8 +197,9 @@ function PinInput({
   }, [value]);
 
   return (
-    <View>
+    <Pressable onPress={() => inputRef.current?.focus()}>
       <TextInput
+        ref={inputRef}
         value={value}
         onChangeText={(v) => {
           const digits = v.replace(/\D/g, '').slice(0, 4);
@@ -237,14 +223,14 @@ function PinInput({
           padding: 0,
         }}
       />
-      <View className="flex-row justify-center gap-3">
+      <View pointerEvents="none" className="flex-row justify-center gap-3">
         {[0, 1, 2, 3].map((i) => (
           <View
             key={i}
             className="h-14 w-14 items-center justify-center rounded-2xl border-2"
             style={{
-              borderColor: value.length > i ? '#FF9800' : isDark ? '#404040' : '#D0D0D0',
-              backgroundColor: value.length > i ? '#FF980022' : 'transparent',
+              borderColor: value.length > i ? accent : isDark ? '#404040' : '#D0D0D0',
+              backgroundColor: value.length > i ? `${accent}22` : 'transparent',
             }}
           >
             <Text className="font-700 text-xl text-black dark:text-white">
@@ -253,7 +239,7 @@ function PinInput({
           </View>
         ))}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
