@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { useThemeStore } from '../store/themeStore';
 import { fr } from '../i18n/fr';
@@ -14,10 +14,9 @@ export function LockScreen({ onUnlock }: Props) {
   const accent = useThemeStore((s) => s.accent);
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'unlock' | 'setup' | 'change'>('unlock');
+  const [mode, setMode] = useState<'unlock' | 'setup1' | 'setup2' | 'change1' | 'change2'>('unlock');
+  const [firstPin, setFirstPin] = useState('');
   const [oldPin, setOldPin] = useState('');
-  const [newPin, setNewPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
 
   useEffect(() => {
     void isLockEnabled().then((enabled) => {
@@ -26,7 +25,7 @@ export function LockScreen({ onUnlock }: Props) {
         return;
       }
       void hasPinSet().then((has) => {
-        if (!has) setMode('setup');
+        if (!has) setMode('setup1');
       });
     });
   }, [onUnlock]);
@@ -43,17 +42,27 @@ export function LockScreen({ onUnlock }: Props) {
     }
   };
 
-  const handleSetup = async () => {
-    if (newPin.length !== 4) {
+  const handleSetup1 = () => {
+    if (pin.length !== 4) {
       setError(fr.lock.pinLength);
       return;
     }
-    if (newPin !== confirmPin) {
+    setFirstPin(pin);
+    setPin('');
+    setError(null);
+    setMode('setup2');
+  };
+
+  const handleSetup2 = async () => {
+    if (pin !== firstPin) {
       setError(fr.lock.pinMismatch);
+      setPin('');
+      setMode('setup1');
+      setFirstPin('');
       return;
     }
     try {
-      await setupPin(newPin);
+      await setupPin(pin);
       setError(null);
       onUnlock();
     } catch (e) {
@@ -61,22 +70,37 @@ export function LockScreen({ onUnlock }: Props) {
     }
   };
 
-  const handleChange = async () => {
-    if (newPin.length !== 4) {
+  const handleChange1 = async () => {
+    if (pin.length !== 4) {
       setError(fr.lock.pinLength);
       return;
     }
-    if (newPin !== confirmPin) {
+    const valid = await verifyPin(pin);
+    if (!valid) {
+      setError(fr.lock.wrongPin);
+      setPin('');
+      return;
+    }
+    setOldPin(pin);
+    setPin('');
+    setError(null);
+    setMode('change2');
+  };
+
+  const handleChange2 = async () => {
+    if (pin !== firstPin) {
       setError(fr.lock.pinMismatch);
+      setPin('');
+      setMode('change1');
+      setFirstPin('');
       return;
     }
     try {
-      await changePin(oldPin, newPin);
+      await changePin(oldPin, pin);
       setError(null);
       setMode('unlock');
       setOldPin('');
-      setNewPin('');
-      setConfirmPin('');
+      setFirstPin('');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -89,62 +113,66 @@ export function LockScreen({ onUnlock }: Props) {
 
   const isDark = colorScheme === 'dark';
 
+  const title =
+    mode === 'setup1' || mode === 'setup2'
+      ? fr.lock.setupTitle
+      : mode === 'change1' || mode === 'change2'
+        ? fr.lock.changeTitle
+        : fr.lock.unlockTitle;
+
+  const hint =
+    mode === 'setup1'
+      ? fr.lock.setupHint
+      : mode === 'setup2'
+        ? fr.lock.confirmHint
+        : mode === 'change1'
+          ? fr.lock.changeOldHint
+          : mode === 'change2'
+            ? fr.lock.confirmHint
+            : null;
+
+  const onSubmit =
+    mode === 'unlock'
+      ? tryUnlock
+      : mode === 'setup1'
+        ? handleSetup1
+        : mode === 'setup2'
+          ? () => void handleSetup2()
+          : mode === 'change1'
+            ? handleChange1
+            : () => void handleChange2();
+
+  const submitLabel =
+    mode === 'setup1' || mode === 'change1'
+      ? fr.lock.next
+      : mode === 'setup2' || mode === 'change2'
+        ? fr.lock.savePin
+        : null;
+
   return (
     <View className="flex-1 items-center justify-center gap-6 px-8">
-      <Text className="font-700 text-2xl text-black dark:text-white">
-        {mode === 'setup' ? fr.lock.setupTitle : mode === 'change' ? fr.lock.changeTitle : fr.lock.unlockTitle}
-      </Text>
+      <Text className="font-700 text-2xl text-black dark:text-white">{title}</Text>
+      {hint ? (
+        <Text className="font-400 text-center text-sm text-neutral-600 dark:text-neutral-300">
+          {hint}
+        </Text>
+      ) : null}
 
-      {mode === 'setup' ? (
-        <View className="w-full gap-4">
-          <Text className="font-400 text-center text-sm text-neutral-600 dark:text-neutral-300">
-            {fr.lock.setupHint}
-          </Text>
-          <PinInput value={newPin} onChange={setNewPin} isDark={isDark} />
-          <PinInput value={confirmPin} onChange={setConfirmPin} isDark={isDark} />
-          {error ? <ErrorText message={error} /> : null}
+      <View className="w-full gap-4">
+        <PinInput value={pin} onChange={setPin} isDark={isDark} onComplete={onSubmit} />
+        {error ? <ErrorText message={error} /> : null}
+        {submitLabel ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={fr.lock.savePin}
-            onPress={handleSetup}
+            accessibilityLabel={submitLabel}
+            onPress={onSubmit}
             className="items-center rounded-full px-4 py-3"
             style={{ backgroundColor: accent }}
           >
-            <Text className="font-500 text-base text-white">{fr.lock.savePin}</Text>
+            <Text className="font-500 text-base text-white">{submitLabel}</Text>
           </Pressable>
-        </View>
-      ) : mode === 'change' ? (
-        <View className="w-full gap-4">
-          <PinInput value={oldPin} onChange={setOldPin} isDark={isDark} />
-          <PinInput value={newPin} onChange={setNewPin} isDark={isDark} />
-          <PinInput value={confirmPin} onChange={setConfirmPin} isDark={isDark} />
-          {error ? <ErrorText message={error} /> : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={fr.lock.savePin}
-            onPress={handleChange}
-            className="items-center rounded-full px-4 py-3"
-            style={{ backgroundColor: accent }}
-          >
-            <Text className="font-500 text-base text-white">{fr.lock.savePin}</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <View className="w-full gap-4">
-          <PinInput value={pin} onChange={setPin} isDark={isDark} onComplete={tryUnlock} />
-          {error ? <ErrorText message={error} /> : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={fr.lock.forgotPin}
-            onPress={() => {}}
-            className="items-center"
-          >
-            <Text className="font-400 text-sm text-neutral-500 dark:text-neutral-400">
-              {fr.lock.forgotPin}
-            </Text>
-          </Pressable>
-        </View>
-      )}
+        ) : null}
+      </View>
 
       {mode === 'unlock' ? (
         <Pressable
@@ -173,22 +201,58 @@ function PinInput({
   isDark: boolean;
   onComplete?: () => void;
 }) {
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  useEffect(() => {
+    if (value.length === 4) {
+      const timer = setTimeout(() => onCompleteRef.current?.(), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [value]);
+
   return (
-    <View className="flex-row justify-center gap-3">
-      {[0, 1, 2, 3].map((i) => (
-        <View
-          key={i}
-          className="h-14 w-14 items-center justify-center rounded-2xl border-2"
-          style={{
-            borderColor: value.length > i ? '#FF9800' : isDark ? '#404040' : '#D0D0D0',
-            backgroundColor: value.length > i ? '#FF980022' : 'transparent',
-          }}
-        >
-          <Text className="font-700 text-xl text-black dark:text-white">
-            {value[i] ? '●' : ''}
-          </Text>
-        </View>
-      ))}
+    <View>
+      <TextInput
+        value={value}
+        onChangeText={(v) => {
+          const digits = v.replace(/\D/g, '').slice(0, 4);
+          onChange(digits);
+        }}
+        keyboardType="number-pad"
+        maxLength={4}
+        autoFocus
+        caretHidden
+        placeholder=""
+        placeholderTextColor="transparent"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          opacity: 0,
+          padding: 0,
+        }}
+      />
+      <View className="flex-row justify-center gap-3">
+        {[0, 1, 2, 3].map((i) => (
+          <View
+            key={i}
+            className="h-14 w-14 items-center justify-center rounded-2xl border-2"
+            style={{
+              borderColor: value.length > i ? '#FF9800' : isDark ? '#404040' : '#D0D0D0',
+              backgroundColor: value.length > i ? '#FF980022' : 'transparent',
+            }}
+          >
+            <Text className="font-700 text-xl text-black dark:text-white">
+              {value[i] ? '●' : ''}
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }

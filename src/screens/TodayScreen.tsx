@@ -60,7 +60,8 @@ export function TodayScreen() {
   const closeDay = useWorkdayStore((s) => s.closeDay);
   const accent = useThemeStore((s) => s.accent);
   const { colorScheme } = useColorScheme();
-  const palette = colorScheme === 'dark' ? darkPalette : lightPalette;
+  const isDark = colorScheme === 'dark';
+  const palette = isDark ? darkPalette : lightPalette;
   const levelFormat = useFuelStore((s) => s.levelFormat);
 
   const [odo, setOdo] = useState('');
@@ -326,6 +327,7 @@ export function TodayScreen() {
                 }}
                 keyboardType="numeric"
                 placeholder={lastOdo >= 0 ? String(lastOdo) : ''}
+                placeholderTextColor={isDark ? '#737373' : '#A3A3A3'}
                 className="rounded-xl border border-neutral-300 px-3 py-2 font-400 text-base text-black dark:border-neutral-600 dark:text-white"
               />
               <TextInput

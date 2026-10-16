@@ -54,7 +54,7 @@ export function MoneyScreen() {
       try {
         const file = new File(Paths.document, 'fodi-sauvegarde.txt');
         const content = `Fodi — Sauvegarde\nDate : ${formatDayFr(Date.now())}\n\n` +
-          `Courses : ${formatFBu(Math.round(fares))}\n` +
+          `Courses : ${formatFBu(Math.round(monthTripsFares))}\n` +
           `Carburant : ${formatFBu(Math.round(monthFuelBought))}\n` +
           `Autres coûts : ${formatFBu(Math.round(expensesTotal + occurrencesTotal))}\n` +
           `Reste : ${formatFBu(Math.round(moneyIn - moneyOut))}\n`;
@@ -391,6 +391,31 @@ export function MoneyScreen() {
             </Text>
           </Pressable>
         ))}
+
+        <View className="gap-2 rounded-2xl bg-neutral-100 p-4 dark:bg-neutral-800">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-500 text-base text-black dark:text-white">
+              {fr.money.backup}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={fr.money.backup}
+              onPress={exportBackup}
+              className="flex-row items-center gap-1 rounded-full px-3 py-2"
+              style={{ backgroundColor: accent }}
+            >
+              <Text className="font-500 text-sm text-white">{fr.money.backup}</Text>
+            </Pressable>
+          </View>
+          <Text className="font-400 text-sm text-neutral-600 dark:text-neutral-300">
+            {fr.money.backupHint}
+          </Text>
+          {backupMsg ? (
+            <Text style={{ color: '#2E7D32' }} className="font-500 text-sm">
+              {backupMsg}
+            </Text>
+          ) : null}
+        </View>
       </ScrollView>
 
       <MoneySheet state={sheet} onClose={() => setSheet({ mode: 'closed' })} />

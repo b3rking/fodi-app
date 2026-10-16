@@ -16,7 +16,8 @@ import { Toast } from '../src/components/Toast';
 import { LockScreen } from '../src/components/LockScreen';
 import { darkPalette, lightPalette } from '../src/core/theme';
 import { fr } from '../src/i18n/fr';
-import { isLockEnabled, recordActivity } from '../src/core/lock';
+import { isLockEnabled, recordActivity, shouldAutoLock, getLockTimeoutMs, setCurrentTimeout } from '../src/core/lock';
+import { initDatabase } from '../src/db/database';
 
 /**
  * Racine de la navigation : habillage commun à toutes les routes
@@ -66,21 +67,29 @@ export default function RootLayout() {
     void loadAccent();
   }, [loadFuel, loadTrips, loadMoney, loadWorkday, loadAccent]);
 
-  // Verrouillage : vérifie au montage.
+  // Verrouillage : attend l'init de la base, puis vérifie une seule fois.
+  // Charge aussi le délai configuré en mémoire pour shouldAutoLock().
+  const [dbReady, setDbReady] = useState(false);
   useEffect(() => {
-    void isLockEnabled().then((enabled) => {
-      if (enabled) setLocked(true);
+    void initDatabase().then(() => {
+      setDbReady(true);
+      void getLockTimeoutMs().then((ms) => setCurrentTimeout(ms));
+      void isLockEnabled().then((enabled) => {
+        if (enabled) setLocked(true);
+      });
     });
   }, []);
 
-  // Auto-lock après 5 minutes d'inactivité (via ActivityIndicator).
+  // Auto-lock après le délai configuré (défaut 5 min).
+  // Vérifie à chaque tick si le timeout d'inactivité est écoulé,
+  // pas seulement si un PIN est défini.
   useEffect(() => {
     const timer = setInterval(() => {
       if (locked) return;
       void isLockEnabled().then((enabled) => {
-        if (enabled) setLocked(true);
+        if (enabled && shouldAutoLock()) setLocked(true);
       });
-    }, 30000);
+    }, 1000);
     return () => clearInterval(timer);
   }, [locked]);
 
@@ -106,7 +115,12 @@ export default function RootLayout() {
   if (locked) {
     return (
       <SafeAreaView className="flex-1 bg-white dark:bg-black">
-        <LockScreen onUnlock={() => setLocked(false)} />
+        <LockScreen
+          onUnlock={() => {
+            recordActivity();
+            setLocked(false);
+          }}
+        />
       </SafeAreaView>
     );
   }

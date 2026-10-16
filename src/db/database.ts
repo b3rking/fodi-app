@@ -128,7 +128,7 @@ async function doInit(): Promise<void> {
   `);
   // Migration : ajoute les colonnes fuel si elles manquent (installs existantes).
   const existing = await database.getAllAsync<{ name: string }>(
-    "SELECT name FROM pragma_table_info('workdays') WHERE name IN ('fuel_start_l', 'fuel_end_l')",
+    "SELECT name FROM pragma_table_info('workdays')",
   );
   const existingCols = new Set(existing.map((r) => r.name));
   if (!existingCols.has('fuel_start_l')) {

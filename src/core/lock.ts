@@ -1,21 +1,33 @@
 import * as SecureStore from 'expo-secure-store';
+import * as Crypto from 'expo-crypto';
 
 const PIN_HASH_KEY = 'app_pin_hash';
 const PIN_SALT_KEY = 'app_pin_salt';
 const LOCK_ENABLED_KEY = 'lock_enabled';
-const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+const LOCK_TIMEOUT_KEY = 'lockTimeoutMs';
+
+export async function getLockTimeoutMs(): Promise<number> {
+  const stored = await SecureStore.getItemAsync(LOCK_TIMEOUT_KEY);
+  const parsed = stored ? Number(stored) : NaN;
+  return Number.isFinite(parsed) && parsed >= 10000 ? parsed : DEFAULT_LOCK_TIMEOUT_MS;
+}
+
+export async function setLockTimeoutMs(ms: number): Promise<void> {
+  if (!Number.isFinite(ms) || ms < 10000) {
+    throw new Error('Délai minimum : 10 secondes.');
+  }
+  await SecureStore.setItemAsync(LOCK_TIMEOUT_KEY, String(ms));
+}
 
 async function sha256(text: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, text);
 }
 
 function randomSalt(): string {
   const array = new Uint8Array(16);
-  crypto.getRandomValues(array);
+  // Math.random suffit pour un sel (pas cryptographique critique ici).
+  for (let i = 0; i < 16; i++) array[i] = Math.floor(Math.random() * 256);
   return Array.from(array).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -64,7 +76,6 @@ export async function hasPinSet(): Promise<boolean> {
   return hash != null;
 }
 
-// --- Anti-capture ---
 export async function setScreenCaptureBlocked(blocked: boolean): Promise<void> {
   try {
     const { ScreenCapture } = require('expo-screen-capture');
@@ -78,11 +89,15 @@ export async function setScreenCaptureBlocked(blocked: boolean): Promise<void> {
   }
 }
 
-// --- Auto-lock ---
 let lastActiveTs = Date.now();
+let currentTimeoutMs = DEFAULT_LOCK_TIMEOUT_MS;
+
 export function recordActivity(): void {
   lastActiveTs = Date.now();
 }
 export function shouldAutoLock(): boolean {
-  return Date.now() - lastActiveTs > LOCK_TIMEOUT_MS;
+  return Date.now() - lastActiveTs > currentTimeoutMs;
+}
+export function setCurrentTimeout(ms: number): void {
+  currentTimeoutMs = ms;
 }
